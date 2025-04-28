@@ -7,6 +7,10 @@ class TaskViewModel: ObservableObject {
         Task(title: "Roofing", isCompleted: false, durationInDays: 7, assignedTo: nil, priority: .low, deadline: nil)
     ]
 
+    init(tasks: [Task] = []) {
+        self.tasks = tasks
+    }
+
     func updateTask(at index: Int, title: String, assignedTo: String?, priority: TaskPriority, deadline: Date?) {
         guard tasks.indices.contains(index) else { return }
         tasks[index].title = title

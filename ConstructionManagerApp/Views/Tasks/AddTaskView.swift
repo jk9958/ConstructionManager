@@ -1,46 +1,47 @@
 import SwiftUI
 
 struct AddTaskView: View {
-    @ObservedObject var viewModel: TaskViewModel
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var project: ProjectViewModel
 
     @State private var title: String = ""
-    @State private var assignedTo: String = ""
+    @State private var durationInDays: Int = 1
     @State private var priority: TaskPriority = .medium
-    @State private var deadline: Date = Date()
-
-    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Task Details")) {
-                    TextField("Task Title", text: $title)
-                    TextField("Assigned To", text: $assignedTo)
+                    TextField("Title", text: $title)
+                    Stepper("Duration: \(durationInDays) days", value: $durationInDays, in: 1...365)
                     Picker("Priority", selection: $priority) {
                         ForEach(TaskPriority.allCases, id: \.self) { priority in
-                            Text(priority.rawValue).tag(priority)
+                            Text(priority.rawValue.capitalized).tag(priority)
                         }
                     }
-                    DatePicker("Deadline", selection: $deadline, displayedComponents: .date)
-                }
-
-                Button("Add Task") {
-                    viewModel.addTask(
-                        title: title,
-                        assignedTo: assignedTo.isEmpty ? nil : assignedTo,
-                        priority: priority,
-                        deadline: deadline
-                    )
-                    presentationMode.wrappedValue.dismiss()
+                    .pickerStyle(SegmentedPickerStyle())
                 }
             }
             .navigationTitle("Add Task")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let newTask = Task(
+                            title: title,
+                            isCompleted: false,
+                            durationInDays: durationInDays,
+                            priority: priority
+                        )
+                        project.addTask(newTask)
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
         }
-    }
-}
-
-struct AddTaskView_Previews: PreviewProvider {
-    static var previews: some View {
-        AddTaskView(viewModel: TaskViewModel())
     }
 }

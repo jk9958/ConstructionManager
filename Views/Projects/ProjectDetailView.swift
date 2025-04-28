@@ -4,6 +4,7 @@ struct ProjectDetailView: View {
     @ObservedObject var project: ProjectViewModel
     @ObservedObject var viewModel: ProjectListViewModel
     var projectIndex: Int
+    @State private var isPresentingAddTaskView = false
 
     var body: some View {
         ScrollView {
@@ -23,6 +24,29 @@ struct ProjectDetailView: View {
 
                 Text("Tasks")
                     .font(.headline)
+
+                NavigationLink(destination: TaskListView(tasks: project.project.tasks)) {
+                    HStack {
+                        Image(systemName: "list.bullet")
+                        Text("View All Tasks")
+                    }
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(8)
+                }
+
+                Button(action: {
+                    isPresentingAddTaskView = true
+                }) {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Add Task")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .sheet(isPresented: $isPresentingAddTaskView) {
+                    AddTaskView(project: project)
+                }
 
                 ForEach(project.project.tasks) { task in
                     TaskRowView(task: task, toggleCompletion: {

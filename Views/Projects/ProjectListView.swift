@@ -7,9 +7,7 @@ struct ProjectListView: View {
         NavigationView {
             List {
                 ForEach(viewModel.projectViewModels, id: \.project.id) { projectViewModel in
-                    NavigationLink(destination: ProjectDetailView(project: projectViewModel, viewModel: viewModel, projectIndex: viewModel.projects.firstIndex(where: { $0.id == projectViewModel.project.id })!)) {
-                        ProjectRowView(project: projectViewModel.project)
-                    }
+                    ProjectRow(projectViewModel: projectViewModel)
                 }
             }
             .navigationTitle("Projects")
@@ -23,6 +21,21 @@ struct ProjectListView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - ProjectRow Component
+struct ProjectRow: View {
+    let projectViewModel: ProjectViewModel
+    @ObservedObject var viewModel = ProjectListViewModel()
+
+    var body: some View {
+        let projectIndex = viewModel.projects.firstIndex(where: { $0.id == projectViewModel.project.id }) ?? 0
+        let destinationView = ProjectDetailView(project: projectViewModel, viewModel: viewModel, projectIndex: projectIndex)
+
+        NavigationLink(destination: destinationView) {
+            ProjectRowView(project: projectViewModel.project)
         }
     }
 }
