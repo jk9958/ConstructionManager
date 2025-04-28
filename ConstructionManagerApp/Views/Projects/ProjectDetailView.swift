@@ -36,7 +36,7 @@ struct ProjectDetailView: View {
 
                 ForEach(projectViewModel.project.tasks) { task in
                     TaskRowView(task: task, toggleCompletion: {
-                        viewModel.toggleTaskCompletion(for: projectIndex, taskID: task.id)
+                        projectViewModel.toggleTaskCompletion(for: task.id)
                     })
                 }
 

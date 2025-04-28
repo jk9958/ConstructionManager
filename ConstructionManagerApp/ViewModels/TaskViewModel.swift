@@ -31,8 +31,8 @@ class TaskViewModel: ObservableObject {
             tasks.append(newTask)
         }
     
-    func toggleTaskCompletion(at index: Int) {
-        guard tasks.indices.contains(index) else { return }
+    func toggleTaskCompletion(task id: UUID) {
+        guard  let index = tasks.indices.filter({ tasks[$0].id == id }).first else { return }
         tasks[index].isCompleted.toggle()
     }
     

@@ -1,12 +1,17 @@
 import SwiftUI
 
 struct TaskListView: View {
-    @StateObject private var viewModel = TaskViewModel() // ViewModel manages tasks
+    @StateObject private var viewModel = TaskViewModel()
+    var tasks: [Task] // Accept tasks as a parameter
+
+    init(tasks: [Task] = []) {
+        self.tasks = tasks
+    }
 
     var body: some View {
         NavigationView {
             Group {
-                if viewModel.tasks.isEmpty {
+                if tasks.isEmpty {
                     emptyStateView
                 } else {
                     taskListView
@@ -15,7 +20,7 @@ struct TaskListView: View {
             .navigationTitle("Tasks")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: AddTaskView(viewModel: viewModel)) {
+                    NavigationLink(destination: AddTaskView(project: ProjectViewModel(project: Project(name: "Default Project", description: "", startDate: Date(), endDate: Date(), budget: 0.0, tasks: [], expenses: [])))) {
                         HStack {
                             Image(systemName: "plus")
                             Text("Add Task")
@@ -47,7 +52,7 @@ struct TaskListView: View {
     // MARK: - Task List View
     private var taskListView: some View {
         List {
-            ForEach(viewModel.tasks) { task in
+            ForEach(tasks) { task in
                 HStack {
                     TaskRowView(task: task, toggleCompletion: {
                         if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
@@ -71,6 +76,9 @@ struct TaskListView: View {
 
 struct TaskListView_Previews: PreviewProvider {
     static var previews: some View {
-        TaskListView()
+        TaskListView(tasks: [
+            Task(title: "Task 1", isCompleted: false, durationInDays: 5, priority: .high),
+            Task(title: "Task 2", isCompleted: true, durationInDays: 3, priority: .medium)
+        ])
     }
 }

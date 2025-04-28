@@ -10,7 +10,7 @@ struct HomeView: View {
                 ForEach(taskViewModel.tasks.filter { !$0.isCompleted }) { task in
                     TaskRowView(task: task, toggleCompletion: {
                         if let index = taskViewModel.tasks.firstIndex(where: { $0.id == task.id }) {
-                            taskViewModel.toggleTaskCompletion(at: index)
+                            taskViewModel.toggleTaskCompletion(task: task.id)
                         }
                     })
                 }

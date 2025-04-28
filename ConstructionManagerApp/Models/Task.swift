@@ -1,7 +1,7 @@
 
 import Foundation
 
-struct Task: Identifiable, Codable, Equatable {
+struct Task: Identifiable, Codable, Equatable  {
     let id = UUID()
     var title: String
     var isCompleted: Bool
@@ -13,10 +13,13 @@ struct Task: Identifiable, Codable, Equatable {
     static func == (lhs: Task, rhs: Task) -> Bool {
         return lhs.id == rhs.id
     }
+    
+    mutating func toggleCompletion() {
+        isCompleted.toggle()
+    }
 }
 
 enum TaskPriority: String, CaseIterable, Codable {
-    case all = "All"
     case low = "Low"
     case medium = "Medium"
     case high = "High"

@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct TaskListView: View {
-    @StateObject private var viewModel = TaskViewModel()
+    @StateObject private var viewModel : TaskViewModel
 
     init(tasks: [Task] = []) {
-        self.viewModel.tasks = tasks
+        _viewModel = StateObject(wrappedValue: TaskViewModel(tasks: tasks))
     }
-    
+
     var body: some View {
         NavigationView {
             Group {
@@ -55,13 +55,13 @@ struct TaskListView: View {
                 HStack {
                     TaskRowView(task: task, toggleCompletion: {
                         if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
-                            viewModel.toggleTaskCompletion(at: index)
+                            viewModel.toggleTaskCompletion(task: task.id)
                         }
                     })
                     Spacer()
                     Button(action: {
                         if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
-                            viewModel.removeTask(at: index)
+                            viewModel.tasks.remove(at: index)
                         }
                     }) {
                         Image(systemName: "trash")
@@ -75,7 +75,10 @@ struct TaskListView: View {
 
 struct TaskListView_Previews: PreviewProvider {
     static var previews: some View {
-        TaskListView()
+        TaskListView(tasks: [
+            Task(title: "Task 1", isCompleted: false, durationInDays: 5, priority: .high),
+            Task(title: "Task 2", isCompleted: true, durationInDays: 3, priority: .medium)
+        ])
     }
 }
 
