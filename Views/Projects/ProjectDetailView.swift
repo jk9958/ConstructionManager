@@ -29,6 +29,16 @@ struct ProjectDetailView: View {
                         viewModel.toggleTaskCompletion(for: projectIndex, taskID: task.id)
                     })
                 }
+
+                Text("Expenses")
+                    .font(.headline)
+                ForEach(project.project.expenses) { expense in
+                    HStack {
+                        Text(expense.description)
+                        Spacer()
+                        Text("$\(expense.amount, specifier: "%.2f")")
+                    }
+                }
             }
             .padding()
         }
