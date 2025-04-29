@@ -144,7 +144,7 @@ struct ProjectDashboardView: View {
             ForEach(filteredProjects.indices, id: \.self) { index in
                 NavigationLink(
                     destination: ProjectDetailView(
-                        projectViewModel: ProjectViewModel(project: filteredProjects[index]),
+                        project: ProjectViewModel(project: filteredProjects[index]),
                         viewModel: viewModel,
                         projectIndex: index
                     )

@@ -2,9 +2,9 @@ import Foundation
 
 class TaskViewModel: ObservableObject {
     @Published var tasks: [Task] = [
-        Task(title: "Foundation", isCompleted: false, durationInDays: 5, assignedTo: "John", priority: .high, deadline: nil),
-        Task(title: "Framing", isCompleted: false, durationInDays: 10, assignedTo: "Alice", priority: .medium, deadline: nil),
-        Task(title: "Roofing", isCompleted: false, durationInDays: 7, assignedTo: nil, priority: .low, deadline: nil)
+        Task(title: "Foundation", isCompleted: false, durationInDays: 5, assignedTo: "John", priority: .high, deadline: nil, startDate: Date()),
+        Task(title: "Framing", isCompleted: false, durationInDays: 10, assignedTo: "Alice", priority: .medium, deadline: nil, startDate: Date()),
+        Task(title: "Roofing", isCompleted: false, durationInDays: 7, assignedTo: nil, priority: .low, deadline: nil, startDate: Date())
     ]
 
     init(tasks: [Task] = []) {
@@ -26,7 +26,8 @@ class TaskViewModel: ObservableObject {
                 durationInDays: 0, // Default value, can be updated later
                 assignedTo: assignedTo,
                 priority: priority,
-                deadline: deadline
+                deadline: deadline,
+                startDate: Date()
             )
             tasks.append(newTask)
         }
@@ -34,6 +35,16 @@ class TaskViewModel: ObservableObject {
     func toggleTaskCompletion(task id: UUID) {
         guard  let index = tasks.indices.filter({ tasks[$0].id == id }).first else { return }
         tasks[index].isCompleted.toggle()
+    }
+    
+    func updateStatus(ofTask id: UUID, status: TaskStatus) {
+        guard  let index = tasks.indices.filter({ tasks[$0].id == id }).first else { return }
+        tasks[index].status = status
+    }
+
+    func updateTaskStatus(at index: Int, to newStatus: TaskStatus) {
+        guard tasks.indices.contains(index) else { return }
+        tasks[index].status = newStatus
     }
     
     func removeTask(at index: Int) {

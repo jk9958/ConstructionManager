@@ -3,6 +3,7 @@ import SwiftUI
 struct TaskRowView: View {
     var task: Task
     var toggleCompletion: () -> Void
+    var updateStatus: (TaskStatus) -> Void
 
     var body: some View {
         HStack {
@@ -14,6 +15,9 @@ struct TaskRowView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }
+                Text("Start Date: \(task.startDate, formatter: dateFormatter)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
                 Text("Priority: \(task.priority.rawValue)")
                     .font(.subheadline)
                     .foregroundColor(priorityColor(for: task.priority))
@@ -25,10 +29,7 @@ struct TaskRowView: View {
             Button(action: toggleCompletion) {
                 Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(task.isCompleted ? .green : .gray)
-                    .font(.title2)
             }
-            .contentShape(Rectangle()) // Ensures the button is fully tappable
-            .accessibilityLabel(task.isCompleted ? "Mark as incomplete" : "Mark as complete")
         }
         .padding(.vertical, 8)
     }
@@ -40,6 +41,12 @@ struct TaskRowView: View {
         case .low: return .green
         }
     }
+
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }
 }
 
 struct TaskRowView_Previews: PreviewProvider {
@@ -49,9 +56,13 @@ struct TaskRowView_Previews: PreviewProvider {
                 title: "Inspect foundation",
                 isCompleted: false,
                 durationInDays: 3,
-                assignedTo: "John Doe", priority: .high
+                assignedTo: "John Doe",
+                priority: .high,
+                deadline: Date().addingTimeInterval(86400 * 5),
+                startDate: Date()
             ),
-            toggleCompletion: {}
+            toggleCompletion: {},
+            updateStatus: { _ in }
         )
         .previewLayout(.sizeThatFits)
         .padding()

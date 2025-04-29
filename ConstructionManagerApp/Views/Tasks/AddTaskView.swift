@@ -35,7 +35,8 @@ struct AddTaskView: View {
                             title: title,
                             isCompleted: false,
                             durationInDays: durationInDays,
-                            priority: priority
+                            priority: priority,
+                            startDate: Date()
                         )
                         project.addTask(newTask)
                         presentationMode.wrappedValue.dismiss()

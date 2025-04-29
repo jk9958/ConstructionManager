@@ -3,6 +3,9 @@ import SwiftUI
 struct TaskRowView: View {
     var task: Task
     var toggleCompletion: () -> Void
+    var updateStatus: (TaskStatus) -> Void
+
+    @State private var isEditingStatus = false
 
     var body: some View {
         HStack {
@@ -14,12 +17,37 @@ struct TaskRowView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }
+                Text("Start Date: \(task.startDate, formatter: dateFormatter)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
                 Text("Priority: \(task.priority.rawValue)")
                     .font(.subheadline)
                     .foregroundColor(priorityColor(for: task.priority))
                 Text("Duration: \(task.durationInDays) days")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+
+                if isEditingStatus {
+                    Picker("Status", selection: Binding(
+                        get: { task.status },
+                        set: { newStatus in
+                            updateStatus(newStatus)
+                            isEditingStatus = false
+                        }
+                    )) {
+                        ForEach(TaskStatus.allCases, id: \.self) { status in
+                            Text(status.rawValue).tag(status)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                } else {
+                    Text("Status: \(task.status.rawValue)")
+                        .font(.subheadline)
+                        .foregroundColor(statusColor(for: task.status))
+                        .onTapGesture {
+                            isEditingStatus = true
+                        }
+                }
             }
             Spacer()
             Button(action: toggleCompletion) {
@@ -27,7 +55,7 @@ struct TaskRowView: View {
                     .foregroundColor(task.isCompleted ? .green : .gray)
                     .font(.title2)
             }
-            .contentShape(Rectangle()) // Ensures the button is fully tappable
+            .contentShape(Rectangle())
             .accessibilityLabel(task.isCompleted ? "Mark as incomplete" : "Mark as complete")
         }
         .padding(.vertical, 8)
@@ -40,6 +68,20 @@ struct TaskRowView: View {
         case .low: return .green
         }
     }
+
+    private func statusColor(for status: TaskStatus) -> Color {
+        switch status {
+        case .notStarted: return .gray
+        case .inProgress: return .blue
+        case .completed: return .green
+        }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }
 }
 
 struct TaskRowView_Previews: PreviewProvider {
@@ -49,10 +91,13 @@ struct TaskRowView_Previews: PreviewProvider {
                 title: "Inspect foundation",
                 isCompleted: false,
                 durationInDays: 3,
+                assignedTo: "John Doe",
                 priority: .high,
-                assignedTo: "John Doe"
+                status: .inProgress,
+                startDate: Date()
             ),
-            toggleCompletion: {}
+            toggleCompletion: {},
+            updateStatus: { _ in }
         )
         .previewLayout(.sizeThatFits)
         .padding()

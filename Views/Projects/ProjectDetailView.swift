@@ -4,7 +4,6 @@ struct ProjectDetailView: View {
     @ObservedObject var project: ProjectViewModel
     @ObservedObject var viewModel: ProjectListViewModel
     var projectIndex: Int
-    @State private var isPresentingAddTaskView = false
 
     var body: some View {
         ScrollView {
@@ -25,33 +24,26 @@ struct ProjectDetailView: View {
                 Text("Tasks")
                     .font(.headline)
 
-                NavigationLink(destination: TaskListView(tasks: project.project.tasks)) {
-                    HStack {
-                        Image(systemName: "list.bullet")
-                        Text("View All Tasks")
-                    }
-                    .padding()
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
-                }
-
-                Button(action: {
-                    isPresentingAddTaskView = true
-                }) {
-                    HStack {
-                        Image(systemName: "plus")
-                        Text("Add Task")
-                    }
-                }
-                .buttonStyle(.bordered)
-                .sheet(isPresented: $isPresentingAddTaskView) {
-                    AddTaskView(project: project)
-                }
-
                 ForEach(project.project.tasks) { task in
-                    TaskRowView(task: task, toggleCompletion: {
-                        viewModel.toggleTaskCompletion(for: projectIndex, taskID: task.id)
-                    })
+                    TaskRowView(
+                        task: task,
+                        toggleCompletion: {
+                            if let taskIndex = project.project.tasks.firstIndex(where: { $0.id == task.id }) {
+                                viewModel.toggleTaskCompletion(for: projectIndex, taskID: task.id)
+                            }
+                        },
+                        updateStatus: { newStatus in
+                            if let taskIndex = project.project.tasks.firstIndex(where: { $0.id == task.id }) {
+                                viewModel.updateTaskStatus(for: projectIndex, taskID: task.id, to: newStatus)
+                            }
+                        }
+                    )
+                }
+
+                NavigationLink(destination: TaskListView(tasks: project.project.tasks)) {
+                    Text("View All Tasks")
+                        .font(.headline)
+                        .foregroundColor(.blue)
                 }
 
                 Text("Expenses")

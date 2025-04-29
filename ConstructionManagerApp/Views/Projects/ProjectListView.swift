@@ -32,7 +32,7 @@ struct ProjectRow: View {
 
     var body: some View {
         let projectIndex = viewModel.projects.firstIndex(where: { $0.id == projectViewModel.project.id }) ?? 0
-        let destinationView = ProjectDetailView(projectViewModel: projectViewModel, viewModel: viewModel, projectIndex: projectIndex)
+        let destinationView = ProjectDetailView(project: projectViewModel, viewModel: viewModel, projectIndex: projectIndex)
 
         NavigationLink(destination: destinationView) {
             ProjectRowView(project: projectViewModel.project)

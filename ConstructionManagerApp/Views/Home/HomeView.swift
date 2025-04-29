@@ -9,8 +9,12 @@ struct HomeView: View {
             List {
                 ForEach(taskViewModel.tasks.filter { !$0.isCompleted }) { task in
                     TaskRowView(task: task, toggleCompletion: {
-                        if let index = taskViewModel.tasks.firstIndex(where: { $0.id == task.id }) {
+                        if taskViewModel.tasks.contains(where: { $0.id == task.id }) {
                             taskViewModel.toggleTaskCompletion(task: task.id)
+                        }
+                    }, updateStatus: { status in
+                        if taskViewModel.tasks.contains(where: { $0.id == task.id }) {
+                            taskViewModel.updateStatus(ofTask: task.id, status: status)
                         }
                     })
                 }

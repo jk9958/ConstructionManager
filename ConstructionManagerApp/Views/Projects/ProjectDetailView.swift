@@ -1,21 +1,21 @@
 import SwiftUI
 
 struct ProjectDetailView: View {
-    @ObservedObject var projectViewModel: ProjectViewModel
+    @ObservedObject var project: ProjectViewModel
     @ObservedObject var viewModel: ProjectListViewModel
     var projectIndex: Int
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text(projectViewModel.project.name)
+                Text(project.project.name)
                     .font(.largeTitle)
                     .bold()
 
                 HStack {
-                    ProgressView(value: projectViewModel.project.progress)
+                    ProgressView(value: project.project.progress)
                         .progressViewStyle(LinearProgressViewStyle())
-                    Text("\(Int(projectViewModel.project.progress * 100))%")
+                    Text("\(Int(project.project.progress * 100))%")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -24,25 +24,31 @@ struct ProjectDetailView: View {
                 Text("Tasks")
                     .font(.headline)
 
-                NavigationLink(destination: TaskListView(tasks: projectViewModel.project.tasks)) {
-                    HStack {
-                        Image(systemName: "list.bullet")
-                        Text("View All Tasks")
-                    }
-                    .padding()
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
+                ForEach(project.project.tasks) { task in
+                    TaskRowView(
+                        task: task,
+                        toggleCompletion: {
+                            if let taskIndex = project.project.tasks.firstIndex(where: { $0.id == task.id }) {
+                                viewModel.toggleTaskCompletion(for: projectIndex, taskID: task.id)
+                            }
+                        },
+                        updateStatus: { newStatus in
+                            if let taskIndex = project.project.tasks.firstIndex(where: { $0.id == task.id }) {
+                                viewModel.updateTaskStatus(for: projectIndex, taskID: task.id, to: newStatus)
+                            }
+                        }
+                    )
                 }
 
-                ForEach(projectViewModel.project.tasks) { task in
-                    TaskRowView(task: task, toggleCompletion: {
-                        projectViewModel.toggleTaskCompletion(for: task.id)
-                    })
+                NavigationLink(destination: TaskListView(tasks: project.project.tasks)) {
+                    Text("View All Tasks")
+                        .font(.headline)
+                        .foregroundColor(.blue)
                 }
 
                 Text("Expenses")
                     .font(.headline)
-                ForEach(projectViewModel.project.expenses) { expense in
+                ForEach(project.project.expenses) { expense in
                     HStack {
                         Text(expense.description)
                         Spacer()
@@ -53,5 +59,55 @@ struct ProjectDetailView: View {
             .padding()
         }
         .navigationTitle("Project Details")
+    }
+}
+
+// MARK: - Preview
+struct ProjectDetailView_Previews: PreviewProvider {
+    static var previews: some View {
+        // Sample Task
+        let sampleTasks = [
+            Task(
+                title: "Task 1",
+                isCompleted: false,
+                durationInDays: 5,
+                assignedTo: "John Doe",
+                priority: .high,
+                deadline: Date().addingTimeInterval(86400 * 5), // 5 days later
+                startDate: Date()
+            ),
+            Task(
+                title: "Task 2",
+                isCompleted: true,
+                durationInDays: 3,
+                assignedTo: "Jane Smith",
+                priority: .medium,
+                deadline: Date().addingTimeInterval(86400 * 3), // 3 days later
+                startDate: Date().addingTimeInterval(-86400 * 2) // 2 days ago
+            )
+        ]
+
+        // Sample Project
+        let sampleProject = Project(
+            name: "Sample Project",
+            description: "This is a sample project for preview purposes.",
+            startDate: Date(),
+            endDate: Date().addingTimeInterval(86400 * 30), // 30 days later
+            budget: 5000.0,
+            tasks: sampleTasks,
+            expenses: []
+        )
+
+        // Sample ViewModel
+        let sampleProjectViewModel = ProjectViewModel(project: sampleProject)
+        let sampleProjectListViewModel = ProjectListViewModel()
+
+        return NavigationView {
+            ProjectDetailView(
+                project: sampleProjectViewModel,
+                viewModel: sampleProjectListViewModel,
+                projectIndex: 0
+            )
+        }
     }
 }

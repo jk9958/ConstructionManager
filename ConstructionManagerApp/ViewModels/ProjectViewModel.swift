@@ -16,4 +16,10 @@ class ProjectViewModel: ObservableObject {
             project.tasks[taskIndex].isCompleted.toggle()
         }
     }
+    
+    func updateStatus(for taskID: UUID, status: TaskStatus) {
+        if let taskIndex = project.tasks.firstIndex(where: { $0.id == taskID }) {
+            project.tasks[taskIndex].status = status
+        }
+    }
 }

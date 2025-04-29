@@ -57,16 +57,12 @@ struct TaskListView: View {
                         if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
                             viewModel.toggleTaskCompletion(task: task.id)
                         }
+                    }, updateStatus: { status in
+                        if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
+                            viewModel.updateStatus(ofTask: task.id, status: status)
+                        }
                     })
                     Spacer()
-                    Button(action: {
-                        if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
-                            viewModel.tasks.remove(at: index)
-                        }
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
                 }
             }
         }
@@ -76,8 +72,8 @@ struct TaskListView: View {
 struct TaskListView_Previews: PreviewProvider {
     static var previews: some View {
         TaskListView(tasks: [
-            Task(title: "Task 1", isCompleted: false, durationInDays: 5, priority: .high),
-            Task(title: "Task 2", isCompleted: true, durationInDays: 3, priority: .medium)
+            Task(title: "Task 1", isCompleted: false, durationInDays: 5, priority: .high, startDate: Date()),
+            Task(title: "Task 2", isCompleted: true, durationInDays: 3, priority: .medium, startDate: Date())
         ])
     }
 }
