@@ -47,18 +47,18 @@
         <attribute name="budgetData" optional="YES" attributeType="Binary"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="documentsData" optional="YES" attributeType="Binary"/>
-        <attribute name="expectedEndDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="expectedEndDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="location" attributeType="String"/>
+        <attribute name="location" optional="YES" attributeType="String"/>
         <attribute name="metadataData" optional="YES" attributeType="Binary"/>
         <attribute name="name" attributeType="String"/>
-        <attribute name="priority" attributeType="String"/>
-        <attribute name="projectDescription" attributeType="String"/>
+        <attribute name="priority" attributeType="String" defaultValueString="Medium"/>
+        <attribute name="projectDescription" optional="YES" attributeType="String"/>
         <attribute name="scheduleData" optional="YES" attributeType="Binary"/>
         <attribute name="startDate" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="status" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
         <attribute name="teamData" optional="YES" attributeType="Binary"/>
-        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="documents" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DocumentEntity" inverseName="project" inverseEntity="DocumentEntity"/>
         <relationship name="expenses" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ExpenseEntity" inverseName="project" inverseEntity="ExpenseEntity"/>
         <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TaskEntity" inverseName="project" inverseEntity="TaskEntity"/>

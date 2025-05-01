@@ -4,25 +4,43 @@ struct TaskListView: View {
     var project: Project
     @State private var tasks: [Task] = []
     @State private var isAddingTask = false
-    @State private var selectedTask: Task? = nil
 
     var body: some View {
         NavigationView {
-            List {
-                ForEach(tasks) { task in
-                    Button(action: {
-                        selectedTask = task
-                    }) {
-                        TaskRowView(
-                            task: task,
-                            toggleCompletion: { toggleTaskCompletion(task) },
-                            updateStatus: { newStatus in updateTaskStatus(task, to: newStatus) }
-                        )
+            VStack {
+                if tasks.isEmpty {
+                    // Show a placeholder message when the task list is empty
+                    VStack {
+                        Text("No tasks available for this project.")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .padding()
+                        Button(action: {
+                            isAddingTask = true
+                        }) {
+                            Label("Add Task", systemImage: "plus")
+                                .font(.headline)
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
+                    }
+                } else {
+                    // Show the list of tasks
+                    List {
+                        ForEach(tasks) { task in
+                            TaskRowView(
+                                task: task,
+                                toggleCompletion: { toggleTaskCompletion(task) },
+                                updateStatus: { newStatus in updateTaskStatus(task, to: newStatus) }
+                            )
+                        }
+                        .onDelete(perform: deleteTask)
                     }
                 }
-                .onDelete(perform: deleteTask)
             }
-            .navigationTitle("Tasks")
+            .navigationTitle("\(project.name ?? "Project") Tasks")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -33,28 +51,37 @@ struct TaskListView: View {
                 }
             }
             .sheet(isPresented: $isAddingTask) {
-                AddTaskView(tasks: $tasks)
+                AddTaskView(project: project)
             }
-            .sheet(item: $selectedTask) { task in
-                EditTaskView(task: $selectedTask, project: project) // Pass the project here
+            .onAppear {
+                loadTasks()
             }
         }
+    }
+
+    private func loadTasks() {
+        tasks = CoreDataManager.shared.fetchTasks(forProjectId: project.id)
     }
 
     private func toggleTaskCompletion(_ task: Task) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[index].isCompleted.toggle()
+            CoreDataManager.shared.saveContext()
         }
     }
 
     private func updateTaskStatus(_ task: Task, to newStatus: TaskStatus) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[index].status = newStatus
+            CoreDataManager.shared.saveContext()
         }
     }
 
     private func deleteTask(at offsets: IndexSet) {
-        tasks.remove(atOffsets: offsets)
-        // Optionally, delete from Core Data or backend
+        for index in offsets {
+            let task = tasks[index]
+            CoreDataManager.shared.deleteTask(task)
+            tasks.remove(at: index)
+        }
     }
 }

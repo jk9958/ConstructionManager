@@ -32,7 +32,7 @@ class CoreDataManager {
 
 extension CoreDataManager {
     // MARK: - TaskEntity CRUD
-    func createTask(from task: Task, for project: ProjectEntity?) {
+    func createTask(from task: Task, forProjectId id: UUID) {
         let taskEntity = TaskEntity(context: context)
         taskEntity.id = task.id
         taskEntity.title = task.title
@@ -47,7 +47,7 @@ extension CoreDataManager {
         taskEntity.completionPercentage = task.completionPercentage
 
         // Assign the task to a project
-        taskEntity.project = project
+        taskEntity.project = fetchProject(id)
 
         // Handle `assignedTo` relationship
         if let assignedTo = task.assignedTo {
@@ -91,13 +91,11 @@ extension CoreDataManager {
         }
     }
 
-    func fetchTasks(for project: ProjectEntity?) -> [Task] {
+    func fetchTasks(forProjectId id: UUID) -> [Task] {
         let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-
+        guard let projectEntity = fetchProject(id) else { return [] }
         // Filter tasks by project if provided
-        if let project = project {
-            fetchRequest.predicate = NSPredicate(format: "project == %@", project)
-        }
+        fetchRequest.predicate = NSPredicate(format: "project == %@", projectEntity)
 
         do {
             let taskEntities = try context.fetch(fetchRequest)
@@ -350,6 +348,19 @@ extension CoreDataManager {
         } catch {
             print("Failed to fetch projects: \(error)")
             return []
+        }
+    }
+
+    func fetchProject(_ id: UUID) -> ProjectEntity? {
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        do {
+            let projectEntity = try context.fetch(fetchRequest)
+            return projectEntity.first
+        } catch {
+            print("Failed to delete project: \(error)")
+            return nil
         }
     }
 

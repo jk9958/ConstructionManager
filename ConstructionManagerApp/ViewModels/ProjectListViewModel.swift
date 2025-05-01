@@ -36,13 +36,14 @@ class ProjectListViewModel: ObservableObject {
             startDate: startDate,
             expectedEndDate: endDate,
             createdAt: Date(),
-            updatedAt: nil,
+            updatedAt: Date(),
             documents: [],
             expenses: [],
             tasks: [],
             team: nil
         )
         projects.append(newProject)
+        CoreDataManager.shared.createProject(from: newProject)
     }
 
     func updateProject(at index: Int, name: String, description: String, startDate: Date, endDate: Date, budget: Double) {

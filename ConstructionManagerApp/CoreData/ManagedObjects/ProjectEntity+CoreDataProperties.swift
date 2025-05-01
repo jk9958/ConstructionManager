@@ -2,7 +2,7 @@
 //  ProjectEntity+CoreDataProperties.swift
 //  ConstructionManagerApp
 //
-//  Created by DakshinAJK on 30/04/2025.
+//  Created by DakshinAJK on 01/05/2025.
 //
 //
 
@@ -36,6 +36,7 @@ extension ProjectEntity {
     @NSManaged public var expenses: NSSet?
     @NSManaged public var tasks: NSSet?
     @NSManaged public var team: TeamEntity?
+
 }
 
 // MARK: Generated accessors for documents
