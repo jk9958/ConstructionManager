@@ -3,15 +3,12 @@ import SwiftUI
 struct ProjectListView: View {
     @StateObject private var viewModel = ProjectListViewModel()
     @State private var isAddingProject = false
-    @State private var selectedProject: Project? = nil
 
     var body: some View {
         NavigationView {
             List {
                 ForEach(viewModel.projects) { project in
-                    Button(action: {
-                        selectedProject = project
-                    }) {
+                    NavigationLink(destination: ProjectDetailView(project: project)) {
                         ProjectCardView(project: project)
                             .padding(.vertical, 4)
                     }
@@ -27,9 +24,6 @@ struct ProjectListView: View {
                         Image(systemName: "plus")
                     }
                 }
-            }
-            .sheet(item: $selectedProject) { project in
-                ProjectDetailView(project: project)
             }
             .sheet(isPresented: $isAddingProject) {
                 AddProjectView(viewModel: viewModel)

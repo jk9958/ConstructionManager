@@ -539,3 +539,28 @@ extension CoreDataManager {
         }
     }
 }
+
+extension CoreDataManager {
+    func updateTask(_ task: Task) {
+        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", task.id as CVarArg)
+
+        do {
+            let taskEntities = try context.fetch(fetchRequest)
+            if let taskEntity = taskEntities.first {
+                taskEntity.title = task.title
+                taskEntity.taskDescription = task.taskDescription
+                taskEntity.isCompleted = task.isCompleted
+                taskEntity.priority = task.priority.rawValue
+                taskEntity.dueDate = task.deadline
+                taskEntity.startDate = task.startDate
+                taskEntity.status = task.status.rawValue
+                taskEntity.updatedAt = Date()
+
+                saveContext()
+            }
+        } catch {
+            print("Failed to update task: \(error)")
+        }
+    }
+}
