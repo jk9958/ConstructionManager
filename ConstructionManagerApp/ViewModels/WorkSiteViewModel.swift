@@ -15,9 +15,9 @@ class WorkSiteViewModel: ObservableObject {
     func loadInitialData() {
         // Sample data for tasks
         tasks = [
-            Task(title: "Inspect foundation", isCompleted: false, durationInDays: 100, priority: .high, startDate: Date()),
-            Task(title: "Order materials", isCompleted: true, durationInDays: 140, priority: .medium, startDate: Date()),
-            Task(title: "Schedule workers", isCompleted: false, durationInDays: 200, priority: .medium, startDate: Date())
+            Task(title: "Inspect foundation", isCompleted: false, durationInDays: 100, priority: .high, startDate: Date(), createdAt: Date()),
+            Task(title: "Order materials", isCompleted: true, durationInDays: 140, priority: .medium, startDate: Date(), createdAt: Date()),
+            Task(title: "Schedule workers", isCompleted: false, durationInDays: 200, priority: .medium, startDate: Date(), createdAt: Date())
         ]
         
         // Sample data for team members

@@ -1,112 +1,187 @@
 import SwiftUI
 
 struct ProjectDetailView: View {
-    @ObservedObject var project: ProjectViewModel
-    @ObservedObject var viewModel: ProjectListViewModel
-    var projectIndex: Int
+    @State var project: Project
+    @State private var isEditing = false
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(project.project.name)
+            VStack(alignment: .leading, spacing: 16) {
+                // Project Name and Description
+                Text(project.name ?? "Untitled Project")
                     .font(.largeTitle)
-                    .bold()
+                    .fontWeight(.bold)
+                Text(project.projectDescription ?? "No description available")
+                    .font(.body)
+                    .foregroundColor(.gray)
 
-                HStack {
-                    ProgressView(value: project.project.progress)
-                        .progressViewStyle(LinearProgressViewStyle())
-                    Text("\(Int(project.project.progress * 100))%")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                // Project Details
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Priority:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(project.priority ?? "N/A")
+                    }
+                    HStack {
+                        Text("Status:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(project.status ?? "N/A")
+                    }
+                    HStack {
+                        Text("Budget:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text("$\(project.budget, specifier: "%.2f")")
+                    }
+                    HStack {
+                        Text("Location:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(project.location ?? "N/A")
+                    }
                 }
-                .padding(.vertical, 8)
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(10)
 
-                Text("Tasks")
-                    .font(.headline)
+                // Dates
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Start Date:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(project.startDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
+                    }
+                    HStack {
+                        Text("Expected End Date:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(project.expectedEndDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
+                    }
+                }
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(10)
 
-                ForEach(project.project.tasks) { task in
-                    TaskRowView(
-                        task: task,
-                        toggleCompletion: {
-                            if let taskIndex = project.project.tasks.firstIndex(where: { $0.id == task.id }) {
-                                viewModel.toggleTaskCompletion(for: projectIndex, taskID: task.id)
-                            }
-                        },
-                        updateStatus: { newStatus in
-                            if let taskIndex = project.project.tasks.firstIndex(where: { $0.id == task.id }) {
-                                viewModel.updateTaskStatus(for: projectIndex, taskID: task.id, to: newStatus)
+                // Tasks Section
+                if let tasks = project.tasks, !tasks.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Tasks")
+                            .font(.headline)
+                        ForEach(tasks) { task in
+                            HStack {
+                                Text(task.title)
+                                Spacer()
+                                Text(task.isCompleted ? "Completed" : "Pending")
+                                    .foregroundColor(task.isCompleted ? .green : .red)
+                                    .font(.caption)
                             }
                         }
-                    )
-                }
-
-                NavigationLink(destination: TaskListView(tasks: project.project.tasks)) {
-                    Text("View All Tasks")
-                        .font(.headline)
-                        .foregroundColor(.blue)
-                }
-
-                Text("Expenses")
-                    .font(.headline)
-                ForEach(project.project.expenses) { expense in
-                    HStack {
-                        Text(expense.description)
-                        Spacer()
-                        Text("$\(expense.amount, specifier: "%.2f")")
                     }
+                    .padding()
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(10)
+                } else {
+                    Text("No tasks available.")
+                        .foregroundColor(.gray)
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(10)
+                }
+
+                // Expenses Section
+                if let expenses = project.expenses, !expenses.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Expenses")
+                            .font(.headline)
+                        ForEach(expenses) { expense in
+                            HStack {
+                                Text(expense.title)
+                                Spacer()
+                                Text("$\(expense.amount, specifier: "%.2f")")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(10)
+                } else {
+                    Text("No expenses available.")
+                        .foregroundColor(.gray)
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(10)
                 }
             }
             .padding()
         }
         .navigationTitle("Project Details")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Edit") {
+                    isEditing = true
+                }
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            EditProjectView(project: $project)
+        }
     }
 }
 
-// MARK: - Preview
 struct ProjectDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        // Sample Task
-        let sampleTasks = [
-            Task(
-                title: "Task 1",
-                isCompleted: false,
-                durationInDays: 5,
-                assignedTo: "John Doe",
-                priority: .high,
-                deadline: Date().addingTimeInterval(86400 * 5), // 5 days later
-                startDate: Date()
-            ),
-            Task(
-                title: "Task 2",
-                isCompleted: true,
-                durationInDays: 3,
-                assignedTo: "Jane Smith",
-                priority: .medium,
-                deadline: Date().addingTimeInterval(86400 * 3), // 3 days later
-                startDate: Date().addingTimeInterval(-86400 * 2) // 2 days ago
-            )
-        ]
-
-        // Sample Project
-        let sampleProject = Project(
-            name: "Sample Project",
-            description: "This is a sample project for preview purposes.",
-            startDate: Date(),
-            endDate: Date().addingTimeInterval(86400 * 30), // 30 days later
-            budget: 5000.0,
-            tasks: sampleTasks,
-            expenses: []
-        )
-
-        // Sample ViewModel
-        let sampleProjectViewModel = ProjectViewModel(project: sampleProject)
-        let sampleProjectListViewModel = ProjectListViewModel()
-
-        return NavigationView {
+        NavigationView {
             ProjectDetailView(
-                project: sampleProjectViewModel,
-                viewModel: sampleProjectListViewModel,
-                projectIndex: 0
+                project: Project(
+                    id: UUID(),
+                    name: "Build a House",
+                    projectDescription: "Residential construction",
+                    priority: "High",
+                    status: "In Progress",
+                    budget: 50000,
+                    location: "New York",
+                    startDate: Date(),
+                    expectedEndDate: Date().addingTimeInterval(86400 * 30),
+                    createdAt: Date(),
+                    updatedAt: nil,
+                    documents: [],
+                    expenses: [
+                        Expense(
+                            id: UUID(),
+                            title: "Cement",
+                            expenseDescription: "Purchased cement for foundation work",
+                            amount: 20000,
+                            category: "Materials",
+                            date: Date(),
+                            status: "Approved",
+                            submittedBy: "John Doe",
+                            receiptURL: nil,
+                            createdAt: Date(),
+                            updatedAt: nil
+                        )
+                    ],
+                    tasks: [
+                        Task(
+                            id: UUID(),
+                            title: "Excavation",
+                            taskDescription: "Excavate the site",
+                            isCompleted: false,
+                            durationInDays: 5,
+                            assignedTo: [],
+                            priority: .high,
+                            deadline: nil,
+                            status: .notStarted,
+                            startDate: Date(),
+                            createdAt: Date(),
+                            updatedAt: nil
+                        )
+                    ],
+                    team: nil
+                )
             )
         }
     }

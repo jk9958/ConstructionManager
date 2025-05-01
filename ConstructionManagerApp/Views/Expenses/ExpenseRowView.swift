@@ -5,33 +5,38 @@ struct ExpenseRowView: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(expense.description)
+            VStack(alignment: .leading) {
+                Text(expense.title)
                     .font(.headline)
-                Text("$\(expense.amount, specifier: "%.2f")")
+                Text(expense.expenseDescription ?? "No description available")
                     .font(.subheadline)
-                    .foregroundColor(.blue)
-                Text(expense.date, style: .date)
-                    .font(.caption)
                     .foregroundColor(.gray)
             }
             Spacer()
-            Image(systemName: "creditcard.fill")
-                .foregroundColor(.green)
-                .font(.title2)
+            Text("$\(expense.amount, specifier: "%.2f")")
+                .font(.subheadline)
+                .foregroundColor(.blue)
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(color: .gray.opacity(0.2), radius: 5, x: 0, y: 5)
-        .animation(.easeInOut, value: expense.amount) // Add animation for smooth updates
+        .padding(.vertical, 4)
     }
 }
 
 struct ExpenseRowView_Previews: PreviewProvider {
     static var previews: some View {
         ExpenseRowView(
-            expense: Expense(description: "Sample Expense", amount: 100.0, date: Date())
+            expense: Expense(
+                id: UUID(),
+                title: "Sample Expense",
+                expenseDescription: "This is a sample expense for testing purposes.",
+                amount: 100.0,
+                category: "Miscellaneous",
+                date: Date(),
+                status: "Approved",
+                submittedBy: "John Doe",
+                receiptURL: nil,
+                createdAt: Date(),
+                updatedAt: nil
+            )
         )
         .previewLayout(.sizeThatFits)
         .padding()

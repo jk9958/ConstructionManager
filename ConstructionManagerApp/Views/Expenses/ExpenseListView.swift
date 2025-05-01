@@ -1,45 +1,44 @@
 import SwiftUI
 
 struct ExpenseListView: View {
-    @StateObject private var viewModel = ExpenseViewModel()
+    @State private var expenses: [Expense] = []
+    @State private var isAddingExpense = false
+    @State private var selectedExpense: Expense? = nil
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                if viewModel.expenses.isEmpty {
-                    VStack {
-                        Image(systemName: "tray")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text("No expenses yet")
-                            .font(.headline)
-                            .foregroundColor(.gray)
+            List {
+                ForEach(expenses) { expense in
+                    Button(action: {
+                        selectedExpense = expense
+                    }) {
+                        ExpenseRowView(expense: expense)
                     }
-                    .padding()
-                } else {
-                    LazyVStack(spacing: 10) {
-                        ForEach(viewModel.expenses.indices, id: \.self) { index in
-                            ExpenseRowView(expense: viewModel.expenses[index])
-                        }
-                        .onDelete { indexSet in
-                            indexSet.forEach { viewModel.removeExpense(at: $0) }
-                        }
-                    }
-                    .padding()
                 }
+                .onDelete(perform: deleteExpense)
             }
-            .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("Expenses")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: AddExpenseView(viewModel: viewModel)) {
+                    Button(action: {
+                        isAddingExpense = true
+                    }) {
                         Image(systemName: "plus")
-                            .font(.title2)
-                            .foregroundColor(.blue)
                     }
                 }
             }
+            .sheet(isPresented: $isAddingExpense) {
+                AddExpenseView(expenses: $expenses)
+            }
+            .sheet(item: $selectedExpense) { expense in
+                EditExpenseView(expense: $selectedExpense)
+            }
         }
+    }
+
+    private func deleteExpense(at offsets: IndexSet) {
+        expenses.remove(atOffsets: offsets)
+        // Optionally, delete from Core Data or backend
     }
 }
 

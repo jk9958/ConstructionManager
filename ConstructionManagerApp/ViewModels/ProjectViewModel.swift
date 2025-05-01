@@ -8,18 +8,21 @@ class ProjectViewModel: ObservableObject {
     }
 
     func addTask(_ task: Task) {
-        project.tasks.append(task)
+        if project.tasks == nil {
+            project.tasks = []
+        }
+        project.tasks?.append(task)
     }
     
     func toggleTaskCompletion(for taskID: UUID) {
-        if let taskIndex = project.tasks.firstIndex(where: { $0.id == taskID }) {
-            project.tasks[taskIndex].isCompleted.toggle()
+        if let taskIndex = project.tasks?.firstIndex(where: { $0.id == taskID }) {
+            project.tasks?[taskIndex].isCompleted.toggle()
         }
     }
     
     func updateStatus(for taskID: UUID, status: TaskStatus) {
-        if let taskIndex = project.tasks.firstIndex(where: { $0.id == taskID }) {
-            project.tasks[taskIndex].status = status
+        if let taskIndex = project.tasks?.firstIndex(where: { $0.id == taskID }) {
+            project.tasks?[taskIndex].status = status
         }
     }
 }

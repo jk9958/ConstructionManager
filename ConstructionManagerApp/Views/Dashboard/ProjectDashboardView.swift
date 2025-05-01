@@ -2,166 +2,72 @@ import SwiftUI
 
 struct ProjectDashboardView: View {
     @StateObject private var viewModel = ProjectListViewModel()
-    @State private var searchText: String = ""
+    @State private var selectedProject: Project? = nil
 
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
-                    headerView
-                    searchBar
-                    summaryView
-                    createProjectButton
-                    projectListNavigationButton // Navigate to ProjectListView
-                    taskNavigationButton
-                    expenseNavigationButton
-                    filteredProjectListView
+                VStack(alignment: .leading, spacing: 16) {
+                    // Dashboard Header
+                    Text("Dashboard")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .padding(.horizontal)
+
+                    // Metrics Section
+                    metricsSection
+                        .padding(.horizontal)
+
+                    // Projects Section
+                    Text("Projects")
+                        .font(.headline)
+                        .padding(.horizontal)
+
+                    ForEach(viewModel.projects) { project in
+                        Button(action: {
+                            selectedProject = project
+                        }) {
+                            ProjectCardView(project: project)
+                                .padding(.horizontal)
+                        }
+                    }
                 }
-                .padding()
+                .padding(.vertical)
             }
             .navigationTitle("Dashboard")
+            .sheet(item: $selectedProject) { project in
+                ProjectDetailView(project: project)
+            }
         }
     }
 
-    // Header View
-    private var headerView: some View {
+    private var metricsSection: some View {
+        HStack(spacing: 16) {
+            MetricCardView(title: "Total Projects", value: "\(viewModel.projects.count)")
+            MetricCardView(title: "In Progress", value: "\(viewModel.projects.filter { $0.status == "In Progress" }.count)")
+            MetricCardView(title: "Completed", value: "\(viewModel.projects.filter { $0.status == "Completed" }.count)")
+        }
+    }
+}
+
+struct MetricCardView: View {
+    let title: String
+    let value: String
+
+    var body: some View {
         VStack {
-            Text("Welcome to Project Dashboard")
-                .font(.largeTitle)
-                .bold()
-                .multilineTextAlignment(.center)
-                .padding()
+            Text(value)
+                .font(.title)
+                .fontWeight(.bold)
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.gray)
         }
-    }
-
-    // Search Bar
-    private var searchBar: some View {
-        TextField("Search Projects", text: $searchText)
-            .padding(10)
-            .background(Color(UIColor.systemGray6))
-            .cornerRadius(8)
-            .padding(.horizontal)
-    }
-
-    // Summary View
-    private var summaryView: some View {
-        HStack {
-            VStack {
-                Text("\(viewModel.projects.count)")
-                    .font(.largeTitle)
-                    .bold()
-                Text("Projects")
-                    .font(.caption)
-            }
-            .frame(maxWidth: .infinity)
-
-            VStack {
-                Text("\(viewModel.projects.flatMap { $0.tasks }.filter { $0.isCompleted }.count)")
-                    .font(.largeTitle)
-                    .bold()
-                Text("Completed Tasks")
-                    .font(.caption)
-            }
-            .frame(maxWidth: .infinity)
-        }
+        .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(UIColor.systemGray6))
+        .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(10)
-        .padding(.horizontal)
-    }
-
-    // "Create New Project" Button
-    private var createProjectButton: some View {
-        NavigationLink(destination: AddProjectView(viewModel: viewModel)) {
-            HStack {
-                Image(systemName: "plus.circle")
-                    .font(.title2)
-                Text("Create New Project")
-                    .font(.headline)
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.blue.opacity(0.2))
-            .cornerRadius(8)
-        }
-        .padding(.horizontal)
-    }
-
-    // Navigate to ProjectListView
-    private var projectListNavigationButton: some View {
-        NavigationLink(destination: ProjectListView()) {
-            HStack {
-                Image(systemName: "folder")
-                    .font(.title2)
-                Text("View All Projects")
-                    .font(.headline)
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.purple.opacity(0.2))
-            .cornerRadius(8)
-        }
-        .padding(.horizontal)
-    }
-
-    // Navigate to TaskListView
-    private var taskNavigationButton: some View {
-        NavigationLink(destination: TaskListView()) {
-            HStack {
-                Image(systemName: "list.bullet")
-                    .font(.title2)
-                Text("View Tasks")
-                    .font(.headline)
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.green.opacity(0.2))
-            .cornerRadius(8)
-        }
-        .padding(.horizontal)
-    }
-
-    // Navigate to ExpenseListView
-    private var expenseNavigationButton: some View {
-        NavigationLink(destination: ExpenseListView()) {
-            HStack {
-                Image(systemName: "creditcard")
-                    .font(.title2)
-                Text("View Expenses")
-                    .font(.headline)
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.orange.opacity(0.2))
-            .cornerRadius(8)
-        }
-        .padding(.horizontal)
-    }
-
-    // Filtered Project List View
-    private var filteredProjectListView: some View {
-        LazyVStack(spacing: 10) {
-            ForEach(filteredProjects.indices, id: \.self) { index in
-                NavigationLink(
-                    destination: ProjectDetailView(
-                        project: ProjectViewModel(project: filteredProjects[index]),
-                        viewModel: viewModel,
-                        projectIndex: index
-                    )
-                ) {
-                    ProjectRowView(project: filteredProjects[index])
-                }
-            }
-        }
-    }
-
-    // Filtered Projects
-    private var filteredProjects: [Project] {
-        if searchText.isEmpty {
-            return viewModel.projects
-        } else {
-            return viewModel.projects.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
+        .shadow(color: .gray.opacity(0.2), radius: 5, x: 0, y: 5)
     }
 }
 

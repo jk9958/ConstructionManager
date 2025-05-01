@@ -1,34 +1,28 @@
 import Foundation
-import Foundation
 
-import Foundation
-
-struct Project: Identifiable {
+struct Project: Identifiable, Codable, Equatable {
     var id = UUID()
-    var name: String
-    var description: String
-    var startDate: Date
-    var endDate: Date
+    var name: String?
+    var projectDescription: String?
+    var priority: String?
+    var status: String?
     var budget: Double
-    var tasks: [Task]
-    var expenses: [Expense]
-    
-    var progress: Double {
-           guard !tasks.isEmpty else { return 0.0 }
-           let completedTasks = tasks.filter { $0.isCompleted }.count
-           return Double(completedTasks) / Double(tasks.count)
-       }
-}
+    var location: String?
+    var startDate: Date?
+    var expectedEndDate: Date? // Core Data property
+    var createdAt: Date?
+    var updatedAt: Date?
+    var documents: [Document]?
+    var expenses: [Expense]?
+    var tasks: [Task]?
+    var team: Team?
 
-struct Expense: Identifiable {
-    var id = UUID() // Unique identifier for each expense
-    var description: String
-    var amount: Double
-    var date: Date
-    
-    init(description: String, amount: Double, date: Date) {
-        self.description = description
-        self.amount = amount
-        self.date = date
+    // Computed property for endDate
+    var endDate: Date? {
+        return expectedEndDate
+    }
+
+    static func == (lhs: Project, rhs: Project) -> Bool {
+        return lhs.id == rhs.id
     }
 }

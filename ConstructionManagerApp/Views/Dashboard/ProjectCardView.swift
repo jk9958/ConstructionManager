@@ -6,17 +6,17 @@ struct ProjectCardView: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text(project.name)
+            Text(project.name ?? "N/A")
                 .font(.headline)
                 .padding(.bottom, 2)
-            Text(project.description)
+            Text(project.projectDescription ?? "N/A")
                 .font(.subheadline)
                 .foregroundColor(.gray)
             HStack {
                 Text("Budget: $\(project.budget, specifier: "%.2f")")
                     .font(.caption)
                 Spacer()
-                Text("Ends: \(project.endDate, style: .date)")
+                Text("Ends: \(project.expectedEndDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")")
                     .font(.caption)
             }
         }
@@ -31,13 +31,21 @@ struct ProjectCardView_Previews: PreviewProvider {
     static var previews: some View {
         ProjectCardView(
             project: Project(
+                id: UUID(),
                 name: "Build a House",
-                description: "Residential construction",
-                startDate: Date(),
-                endDate: Date().addingTimeInterval(86400 * 30),
+                projectDescription: "Residential construction",
+                priority: "High",
+                status: "In Progress",
                 budget: 50000,
+                location: "New York",
+                startDate: Date(),
+                expectedEndDate: Date().addingTimeInterval(86400 * 30),
+                createdAt: Date(),
+                updatedAt: nil,
+                documents: [],
+                expenses: [],
                 tasks: [],
-                expenses: []
+                team: nil
             )
         )
         .previewLayout(.sizeThatFits)

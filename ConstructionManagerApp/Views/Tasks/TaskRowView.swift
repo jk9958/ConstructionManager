@@ -56,10 +56,10 @@ struct TaskRowView_Previews: PreviewProvider {
                 title: "Inspect foundation",
                 isCompleted: false,
                 durationInDays: 3,
-                assignedTo: "John Doe",
+                assignedTo: [UUID()],
                 priority: .high,
                 deadline: Date().addingTimeInterval(86400 * 5),
-                startDate: Date()
+                startDate: Date(), createdAt: Date()
             ),
             toggleCompletion: {},
             updateStatus: { _ in }

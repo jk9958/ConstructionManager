@@ -2,40 +2,45 @@ import SwiftUI
 
 struct ProjectListView: View {
     @StateObject private var viewModel = ProjectListViewModel()
+    @State private var isAddingProject = false
+    @State private var selectedProject: Project? = nil
 
     var body: some View {
         NavigationView {
             List {
-                ForEach(viewModel.projectViewModels, id: \.project.id) { projectViewModel in
-                    ProjectRow(projectViewModel: projectViewModel)
+                ForEach(viewModel.projects) { project in
+                    Button(action: {
+                        selectedProject = project
+                    }) {
+                        ProjectCardView(project: project)
+                            .padding(.vertical, 4)
+                    }
                 }
+                .onDelete(perform: deleteProject)
             }
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: AddProjectView(viewModel: viewModel)) {
-                        HStack {
-                            Image(systemName: "plus")
-                            Text("Add Project")
-                        }
+                    Button(action: {
+                        isAddingProject = true
+                    }) {
+                        Image(systemName: "plus")
                     }
                 }
             }
+            .sheet(item: $selectedProject) { project in
+                ProjectDetailView(project: project)
+            }
+            .sheet(isPresented: $isAddingProject) {
+                AddProjectView(viewModel: viewModel)
+            }
         }
     }
-}
 
-// MARK: - ProjectRow Component
-struct ProjectRow: View {
-    let projectViewModel: ProjectViewModel
-    @ObservedObject var viewModel = ProjectListViewModel()
-
-    var body: some View {
-        let projectIndex = viewModel.projects.firstIndex(where: { $0.id == projectViewModel.project.id }) ?? 0
-        let destinationView = ProjectDetailView(project: projectViewModel, viewModel: viewModel, projectIndex: projectIndex)
-
-        NavigationLink(destination: destinationView) {
-            ProjectRowView(project: projectViewModel.project)
+    private func deleteProject(at offsets: IndexSet) {
+        for index in offsets {
+            viewModel.projects.remove(at: index)
+            // Optionally, delete from Core Data
         }
     }
 }

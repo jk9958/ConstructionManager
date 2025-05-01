@@ -5,17 +5,17 @@ struct ProjectRowView: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text(project.name)
+            Text(project.name ?? "")
                 .font(.headline)
             Text("Budget: $\(project.budget, specifier: "%.2f")")
                 .font(.subheadline)
                 .foregroundColor(.blue)
-            Text("Ends: \(project.endDate, style: .date)")
+            Text("End Date: \(project.endDate?.formatted() ?? "N/A")")
                 .font(.caption)
                 .foregroundColor(.gray)
-            ProgressView(value: project.progress)
-                .progressViewStyle(LinearProgressViewStyle())
-                .padding(.top, 4)
+            Text("Progress: N/A")
+                .font(.caption)
+                .foregroundColor(.gray)
         }
         .padding()
         .background(Color.white)
@@ -30,13 +30,21 @@ struct ProjectRowView_Previews: PreviewProvider {
     static var previews: some View {
         ProjectRowView(
             project: Project(
+                id: UUID(),
                 name: "Build a House",
-                description: "Residential construction",
-                startDate: Date(),
-                endDate: Date().addingTimeInterval(86400 * 30),
+                projectDescription: "Residential construction",
+                priority: "High",
+                status: "In Progress",
                 budget: 50000,
+                location: "New York",
+                startDate: Date(),
+                expectedEndDate: Date().addingTimeInterval(86400 * 30),
+                createdAt: Date(),
+                updatedAt: Date(),
+                documents: [],
+                expenses: [],
                 tasks: [],
-                expenses: []
+                team: nil
             )
         )
         .previewLayout(.sizeThatFits)

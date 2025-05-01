@@ -1,23 +1,17 @@
 import Foundation
 
 class ProjectListViewModel: ObservableObject {
-    @Published var projects: [Project] = [
-        Project(
-            name: "Project A",
-            description: "Building a residential complex",
-            startDate: Date(),
-            endDate: Calendar.current.date(byAdding: .day, value: 30, to: Date())!,
-            budget: 100000,
-            tasks: [
-                Task(title: "Task 1", isCompleted: false, durationInDays: 5, assignedTo: "John", priority: .high, deadline: nil, status: .notStarted, startDate: Date()),
-                Task(title: "Task 2", isCompleted: true, durationInDays: 3, assignedTo: "Alice", priority: .medium, deadline: nil, status: .notStarted, startDate: Date())
-            ],
-            expenses: [
-                Expense(description: "Cement", amount: 20000, date: Date()),
-                Expense(description: "Labor", amount: 30000, date: Date())
-            ]
-        )
-    ]
+    @Published var projects: [Project] = []
+
+    init() {
+        // Load initial data or fetch from CoreDataManager if needed
+        loadProjects()
+    }
+
+    func loadProjects() {
+        // Fetch projects from Core Data using CoreDataManager
+        projects = CoreDataManager.shared.fetchProjects()
+    }
 
     var projectViewModels: [ProjectViewModel] {
         projects.map { ProjectViewModel(project: $0) }
@@ -25,20 +19,28 @@ class ProjectListViewModel: ObservableObject {
 
     func toggleTaskCompletion(for projectIndex: Int, taskID: UUID) {
         guard projects.indices.contains(projectIndex) else { return }
-        if let taskIndex = projects[projectIndex].tasks.firstIndex(where: { $0.id == taskID }) {
-            projects[projectIndex].tasks[taskIndex].isCompleted.toggle()
+        if let taskIndex = projects[projectIndex].tasks?.firstIndex(where: { $0.id == taskID }) {
+            projects[projectIndex].tasks?[taskIndex].isCompleted.toggle()
         }
     }
 
     func addProject(name: String, description: String, startDate: Date, endDate: Date, budget: Double) {
         let newProject = Project(
+            id: UUID(),
             name: name,
-            description: description,
-            startDate: startDate,
-            endDate: endDate,
+            projectDescription: description,
+            priority: "Medium",
+            status: "Not Started",
             budget: budget,
+            location: "Unknown",
+            startDate: startDate,
+            expectedEndDate: endDate,
+            createdAt: Date(),
+            updatedAt: nil,
+            documents: [],
+            expenses: [],
             tasks: [],
-            expenses: []
+            team: nil
         )
         projects.append(newProject)
     }
@@ -46,16 +48,26 @@ class ProjectListViewModel: ObservableObject {
     func updateProject(at index: Int, name: String, description: String, startDate: Date, endDate: Date, budget: Double) {
         guard projects.indices.contains(index) else { return }
         projects[index].name = name
-        projects[index].description = description
+        projects[index].projectDescription = description
         projects[index].startDate = startDate
-        projects[index].endDate = endDate
+        projects[index].expectedEndDate = endDate
         projects[index].budget = budget
     }
-    
+
     func updateTaskStatus(for projectIndex: Int, taskID: UUID, to newStatus: TaskStatus) {
         guard projects.indices.contains(projectIndex) else { return }
-        if let taskIndex = projects[projectIndex].tasks.firstIndex(where: { $0.id == taskID }) {
-            projects[projectIndex].tasks[taskIndex].status = newStatus
+        if let taskIndex = projects[projectIndex].tasks?.firstIndex(where: { $0.id == taskID }) {
+            projects[projectIndex].tasks?[taskIndex].status = newStatus
         }
+    }
+
+    func addTask(to projectIndex: Int, task: Task) {
+        guard projects.indices.contains(projectIndex) else { return }
+        projects[projectIndex].tasks?.append(task)
+    }
+
+    func addExpense(to projectIndex: Int, expense: Expense) {
+        guard projects.indices.contains(projectIndex) else { return }
+        projects[projectIndex].expenses?.append(expense)
     }
 }

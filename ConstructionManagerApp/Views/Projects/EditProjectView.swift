@@ -1,56 +1,92 @@
 import SwiftUI
 
 struct EditProjectView: View {
-    @ObservedObject var viewModel: ProjectListViewModel
-    var projectIndex: Int
+    @Binding var project: Project
+    @Environment(\.presentationMode) var presentationMode
 
     @State private var name: String = ""
     @State private var description: String = ""
-    @State private var startDate: Date = Date()
-    @State private var endDate: Date = Date()
+    @State private var priority: String = "Medium"
+    @State private var status: String = "Not Started"
     @State private var budget: Double = 0.0
+    @State private var location: String = ""
+    @State private var startDate: Date = Date()
+    @State private var expectedEndDate: Date = Date()
 
-    @Environment(\.presentationMode) var presentationMode
+    let priorities = ["Low", "Medium", "High"]
+    let statuses = ["Not Started", "In Progress", "Completed"]
 
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Project Details")) {
-                    TextField("Project Name", text: $name)
+                    TextField("Name", text: $name)
                     TextField("Description", text: $description)
-                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                    DatePicker("End Date", selection: $endDate, displayedComponents: .date)
-                    TextField("Budget", value: $budget, format: .number)
+                    Picker("Priority", selection: $priority) {
+                        ForEach(priorities, id: \.self) { priority in
+                            Text(priority)
+                        }
+                    }
+                    Picker("Status", selection: $status) {
+                        ForEach(statuses, id: \.self) { status in
+                            Text(status)
+                        }
+                    }
+                    TextField("Location", text: $location)
+                        .autocapitalization(.words)
+                    TextField("Budget", value: $budget, formatter: NumberFormatter.currency)
                         .keyboardType(.decimalPad)
                 }
 
-                Button("Save Changes") {
-                    viewModel.updateProject(
-                        at: projectIndex,
-                        name: name,
-                        description: description,
-                        startDate: startDate,
-                        endDate: endDate,
-                        budget: budget
-                    )
-                    presentationMode.wrappedValue.dismiss()
+                Section(header: Text("Dates")) {
+                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                    DatePicker("Expected End Date", selection: $expectedEndDate, displayedComponents: .date)
                 }
             }
-            .navigationTitle("Edit Project")
+            .navigationBarTitle("Edit Project", displayMode: .inline)
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    presentationMode.wrappedValue.dismiss()
+                },
+                trailing: Button("Save") {
+                    saveChanges()
+                    presentationMode.wrappedValue.dismiss()
+                }
+            )
             .onAppear {
-                let project = viewModel.projects[projectIndex]
-                name = project.name
-                description = project.description
-                startDate = project.startDate
-                endDate = project.endDate
-                budget = project.budget
+                loadProjectDetails()
             }
         }
     }
+
+    private func loadProjectDetails() {
+        name = project.name ?? ""
+        description = project.projectDescription ?? ""
+        priority = project.priority ?? "Medium"
+        status = project.status ?? "Not Started"
+        budget = project.budget
+        location = project.location ?? ""
+        startDate = project.startDate ?? Date()
+        expectedEndDate = project.expectedEndDate ?? Date()
+    }
+
+    private func saveChanges() {
+        project.name = name
+        project.projectDescription = description
+        project.priority = priority
+        project.status = status
+        project.budget = budget
+        project.location = location
+        project.startDate = startDate
+        project.expectedEndDate = expectedEndDate
+    }
 }
 
-struct EditProjectView_Previews: PreviewProvider {
-    static var previews: some View {
-        EditProjectView(viewModel: ProjectListViewModel(), projectIndex: 0)
+extension NumberFormatter {
+    static var currency: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 2
+        return formatter
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AddTaskView: View {
     @Environment(\.presentationMode) var presentationMode
-    @ObservedObject var project: ProjectViewModel
+    @Binding var tasks: [Task]
 
     @State private var title: String = ""
     @State private var durationInDays: Int = 1
@@ -32,13 +32,20 @@ struct AddTaskView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let newTask = Task(
+                            id: UUID(),
                             title: title,
+                            taskDescription: nil,
                             isCompleted: false,
                             durationInDays: durationInDays,
+                            assignedTo: [],
                             priority: priority,
-                            startDate: Date()
+                            deadline: nil,
+                            status: .notStarted,
+                            startDate: Date(),
+                            createdAt: Date(),
+                            updatedAt: nil
                         )
-                        project.addTask(newTask)
+                        tasks.append(newTask)
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
