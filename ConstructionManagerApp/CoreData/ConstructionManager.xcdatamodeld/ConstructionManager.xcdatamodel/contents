@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23788" systemVersion="24E263" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
-    <entity name="DocumentActivityEntity" representedClassName="DocumentActivityEntity" syncable="YES">
+    <entity name="DocumentActivityEntity" representedClassName=".DocumentActivityEntity" syncable="YES">
         <attribute name="activityType" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="metadata" optional="YES" attributeType="Transformable"/>
+        <attribute name="metadata" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
         <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="userId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="document" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DocumentEntity" inverseName="activities" inverseEntity="DocumentEntity"/>
     </entity>
-    <entity name="DocumentEntity" representedClassName="DocumentEntity" syncable="YES">
+    <entity name="DocumentEntity" representedClassName=".DocumentEntity" syncable="YES">
         <attribute name="data" optional="YES" attributeType="Binary"/>
         <attribute name="documentDescription" optional="YES" attributeType="String"/>
         <attribute name="documentType" optional="YES" attributeType="String"/>
@@ -20,7 +20,7 @@
         <relationship name="permissions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DocumentPermissionEntity" inverseName="document" inverseEntity="DocumentPermissionEntity"/>
         <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="documents" inverseEntity="ProjectEntity"/>
     </entity>
-    <entity name="DocumentPermissionEntity" representedClassName="DocumentPermissionEntity" syncable="YES">
+    <entity name="DocumentPermissionEntity" representedClassName=".DocumentPermissionEntity" syncable="YES">
         <attribute name="accessLevel" attributeType="String"/>
         <attribute name="expiresAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="grantedAt" attributeType="Date" usesScalarValueType="NO"/>
@@ -28,7 +28,7 @@
         <attribute name="userId" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="document" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DocumentEntity" inverseName="permissions" inverseEntity="DocumentEntity"/>
     </entity>
-    <entity name="ExpenseEntity" representedClassName="ExpenseEntity" syncable="YES">
+    <entity name="ExpenseEntity" representedClassName=".ExpenseEntity" syncable="YES">
         <attribute name="amount" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="category" attributeType="String"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
@@ -42,7 +42,7 @@
         <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="expenses" inverseEntity="ProjectEntity"/>
     </entity>
-    <entity name="ProjectEntity" representedClassName="ProjectEntity" syncable="YES">
+    <entity name="ProjectEntity" representedClassName=".ProjectEntity" syncable="YES">
         <attribute name="budget" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="budgetData" optional="YES" attributeType="Binary"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
@@ -64,7 +64,7 @@
         <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TaskEntity" inverseName="project" inverseEntity="TaskEntity"/>
         <relationship name="team" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TeamEntity" inverseName="projects" inverseEntity="TeamEntity"/>
     </entity>
-    <entity name="TaskEntity" representedClassName="TaskEntity" syncable="YES">
+    <entity name="TaskEntity" representedClassName=".TaskEntity" syncable="YES">
         <attribute name="completionPercentage" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="dueDate" attributeType="Date" usesScalarValueType="NO"/>
@@ -81,7 +81,7 @@
         <relationship name="dependentTasks" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TaskEntity" inverseName="dependencies" inverseEntity="TaskEntity"/>
         <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="tasks" inverseEntity="ProjectEntity"/>
     </entity>
-    <entity name="TeamEntity" representedClassName="TeamEntity" syncable="YES">
+    <entity name="TeamEntity" representedClassName=".TeamEntity" syncable="YES">
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdBy" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
@@ -90,7 +90,7 @@
         <relationship name="members" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserEntity" inverseName="teams" inverseEntity="UserEntity"/>
         <relationship name="projects" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="team" inverseEntity="ProjectEntity"/>
     </entity>
-    <entity name="UserEntity" representedClassName="UserEntity" syncable="YES">
+    <entity name="UserEntity" representedClassName=".UserEntity" syncable="YES">
         <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="department" optional="YES" attributeType="String"/>
         <attribute name="displayName" attributeType="String"/>
@@ -99,7 +99,7 @@
         <attribute name="jobTitle" optional="YES" attributeType="String"/>
         <attribute name="lastLoginAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="phoneNumber" optional="YES" attributeType="String"/>
-        <attribute name="preferences" optional="YES" attributeType="Transformable"/>
+        <attribute name="preferences" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromData"/>
         <attribute name="role" attributeType="String"/>
         <attribute name="status" attributeType="String"/>
         <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>

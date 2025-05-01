@@ -7,7 +7,7 @@ class CoreDataManager {
     let persistentContainer: NSPersistentContainer
 
     private init() {
-        persistentContainer = NSPersistentContainer(name: "ConstructionManagerApp") // Match your .xcdatamodeld file name
+        persistentContainer = NSPersistentContainer(name: "ConstructionManager") // Match your .xcdatamodeld file name
         persistentContainer.loadPersistentStores { _, error in
             if let error = error {
                 fatalError("Failed to load Core Data stack: \(error)")
