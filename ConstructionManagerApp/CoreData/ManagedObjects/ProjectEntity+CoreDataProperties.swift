@@ -17,20 +17,15 @@ extension ProjectEntity {
     }
 
     @NSManaged public var budget: Double
-    @NSManaged public var budgetData: Data?
     @NSManaged public var createdAt: Date?
-    @NSManaged public var documentsData: Data?
     @NSManaged public var expectedEndDate: Date?
     @NSManaged public var id: UUID?
     @NSManaged public var location: String?
-    @NSManaged public var metadataData: Data?
     @NSManaged public var name: String?
     @NSManaged public var priority: String?
     @NSManaged public var projectDescription: String?
-    @NSManaged public var scheduleData: Data?
     @NSManaged public var startDate: Date?
     @NSManaged public var status: String?
-    @NSManaged public var teamData: Data?
     @NSManaged public var updatedAt: Date?
     @NSManaged public var documents: NSSet?
     @NSManaged public var expenses: NSSet?

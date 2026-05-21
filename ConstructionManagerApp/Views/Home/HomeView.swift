@@ -4,7 +4,7 @@ struct HomeView: View {
     @StateObject private var taskViewModel = TaskViewModel()
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(filteredTasks) { task in
                     TaskRowView(
@@ -20,8 +20,12 @@ struct HomeView: View {
                             }
                         }
                     )
+                    .listRowBackground(Color.appBackground)
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
             .navigationTitle("Ongoing Tasks")
             .onAppear {
                 taskViewModel.refreshTasks()
@@ -39,8 +43,8 @@ struct HomeView: View {
     }
 }
 
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    ThemedPreview(theme: .brand) {
         HomeView()
     }
 }

@@ -21,7 +21,6 @@ extension DocumentEntity {
     @NSManaged public var documentType: String?
     @NSManaged public var id: UUID?
     @NSManaged public var name: String?
-    @NSManaged public var projectId: UUID?
     @NSManaged public var updatedAt: Date?
     @NSManaged public var activities: NSSet?
     @NSManaged public var permissions: NSSet?

@@ -9,18 +9,13 @@ struct Project: Identifiable, Codable, Equatable {
     var budget: Double
     var location: String?
     var startDate: Date?
-    var expectedEndDate: Date? // Core Data property
+    var expectedEndDate: Date?
     var createdAt: Date?
     var updatedAt: Date?
     var documents: [Document]?
     var expenses: [Expense]?
     var tasks: [Task]?
     var team: Team?
-
-    // Computed property for endDate
-    var endDate: Date? {
-        return expectedEndDate
-    }
 
     static func == (lhs: Project, rhs: Project) -> Bool {
         return lhs.id == rhs.id

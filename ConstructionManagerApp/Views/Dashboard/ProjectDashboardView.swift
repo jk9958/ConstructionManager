@@ -5,13 +5,14 @@ struct ProjectDashboardView: View {
     @State private var selectedProject: Project? = nil
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: DS.l) {
                     // Dashboard Header
                     Text("Dashboard")
-                        .font(.largeTitle)
+                        .font(DS.title)
                         .fontWeight(.bold)
+                        .foregroundColor(.primary)
                         .padding(.horizontal)
 
                     // Metrics Section
@@ -20,7 +21,8 @@ struct ProjectDashboardView: View {
 
                     // Projects Section
                     Text("Projects")
-                        .font(.headline)
+                        .font(DS.subtitle)
+                        .foregroundColor(DS.theme.secondaryText)
                         .padding(.horizontal)
 
                     ForEach(viewModel.projects) { project in
@@ -34,6 +36,7 @@ struct ProjectDashboardView: View {
                 }
                 .padding(.vertical)
             }
+            .background(Color.appBackground)
             .navigationTitle("Dashboard")
             .sheet(item: $selectedProject) { project in
                 ProjectDetailView(project: project)
@@ -55,24 +58,25 @@ struct MetricCardView: View {
     let value: String
 
     var body: some View {
-        VStack {
+        VStack(spacing: DS.s) {
             Text(value)
-                .font(.title)
+                .font(DS.title)
                 .fontWeight(.bold)
+                .foregroundColor(.primary)
             Text(title)
-                .font(.caption)
-                .foregroundColor(.gray)
+                .font(DS.caption)
+                .foregroundColor(DS.theme.secondaryText)
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
-        .shadow(color: .gray.opacity(0.2), radius: 5, x: 0, y: 5)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
 
-struct ProjectDashboardView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    ThemedPreview(theme: .brand) {
         ProjectDashboardView()
     }
 }

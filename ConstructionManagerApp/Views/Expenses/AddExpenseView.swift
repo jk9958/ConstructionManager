@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct AddExpenseView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Binding var expenses: [Expense]
+    var project: Project? = nil
 
     @State private var title: String = ""
     @State private var expenseDescription: String = ""
@@ -13,7 +14,7 @@ struct AddExpenseView: View {
     let categories = ["Materials", "Labor", "Equipment", "Miscellaneous"]
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Expense Details")) {
                     TextField("Title", text: $title)
@@ -31,16 +32,21 @@ struct AddExpenseView: View {
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                 }
             }
-            .navigationBarTitle("Add Expense", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                },
-                trailing: Button("Save") {
-                    saveExpense()
-                    presentationMode.wrappedValue.dismiss()
+            .navigationTitle("Add Expense")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
-            )
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveExpense()
+                        dismiss()
+                    }
+                    .disabled(title.isEmpty)
+                    .buttonStyle(PrimaryButtonStyle())
+                }
+            }
         }
     }
 
@@ -53,19 +59,13 @@ struct AddExpenseView: View {
             category: category,
             date: date,
             status: "Pending",
-            submittedBy: "Current User", // Replace with actual user data if available
+            submittedBy: "Current User",
             receiptURL: nil,
             createdAt: Date(),
             updatedAt: nil
         )
         expenses.append(newExpense)
-    }
-}
-
-struct AddExpenseView_Previews: PreviewProvider {
-    @State static var expenses: [Expense] = []
-
-    static var previews: some View {
-        AddExpenseView(expenses: $expenses)
+        let projectEntity = project.flatMap { CoreDataManager.shared.fetchProject($0.id) }
+        CoreDataManager.shared.createExpense(from: newExpense, for: projectEntity)
     }
 }

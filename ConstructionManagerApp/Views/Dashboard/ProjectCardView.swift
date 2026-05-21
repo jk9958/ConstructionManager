@@ -5,30 +5,32 @@ struct ProjectCardView: View {
     var project: Project
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: DS.s) {
             Text(project.name ?? "N/A")
-                .font(.headline)
-                .padding(.bottom, 2)
+                .font(DS.title)
+                .foregroundColor(.primary)
             Text(project.projectDescription ?? "N/A")
-                .font(.subheadline)
-                .foregroundColor(.gray)
+                .font(DS.subtitle)
+                .foregroundColor(DS.dim(0.6))
             HStack {
                 Text("Budget: $\(project.budget, specifier: "%.2f")")
-                    .font(.caption)
+                    .font(DS.caption)
+                    .foregroundColor(DS.dim(0.7))
                 Spacer()
                 Text("Ends: \(project.expectedEndDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")")
-                    .font(.caption)
+                    .font(DS.caption)
+                    .foregroundColor(DS.dim(0.7))
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(color: .gray.opacity(0.2), radius: 5, x: 0, y: 5)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
+        .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 3)
     }
 }
 
-struct ProjectCardView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    ThemedPreview(theme: .brand) {
         ProjectCardView(
             project: Project(
                 id: UUID(),

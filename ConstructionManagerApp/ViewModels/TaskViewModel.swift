@@ -37,14 +37,22 @@ class TaskViewModel: ObservableObject {
     func toggleTaskCompletion(task id: UUID) {
         if let index = tasks.firstIndex(where: { $0.id == id }) {
             tasks[index].isCompleted.toggle()
-            CoreDataManager.shared.updateTask(tasks[index])
+            let success = CoreDataManager.shared.updateTask(tasks[index])
+            if !success {
+                tasks[index].isCompleted.toggle()
+                // Optionally inform UI via notification or other mechanism
+            }
         }
     }
     
     func updateStatus(ofTask id: UUID, status: TaskStatus) {
         if let index = tasks.firstIndex(where: { $0.id == id }) {
+            let previous = tasks[index].status
             tasks[index].status = status
-            CoreDataManager.shared.updateTask(tasks[index])
+            let success = CoreDataManager.shared.updateTask(tasks[index])
+            if !success {
+                tasks[index].status = previous
+            }
         }
     }
 

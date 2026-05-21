@@ -2,7 +2,7 @@ import SwiftUI
 
 struct EditProjectView: View {
     @Binding var project: Project
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
 
     @State private var name: String = ""
     @State private var description: String = ""
@@ -17,20 +17,16 @@ struct EditProjectView: View {
     let statuses = ["Not Started", "In Progress", "Completed"]
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Project Details")) {
                     TextField("Name", text: $name)
                     TextField("Description", text: $description)
                     Picker("Priority", selection: $priority) {
-                        ForEach(priorities, id: \.self) { priority in
-                            Text(priority)
-                        }
+                        ForEach(priorities, id: \.self) { Text($0) }
                     }
                     Picker("Status", selection: $status) {
-                        ForEach(statuses, id: \.self) { status in
-                            Text(status)
-                        }
+                        ForEach(statuses, id: \.self) { Text($0) }
                     }
                     TextField("Location", text: $location)
                         .autocapitalization(.words)
@@ -40,22 +36,24 @@ struct EditProjectView: View {
 
                 Section(header: Text("Dates")) {
                     DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                    DatePicker("Expected End Date", selection: $expectedEndDate, displayedComponents: .date)
+                    DatePicker("Expected End Date", selection: $expectedEndDate, in: startDate..., displayedComponents: .date)
                 }
             }
-            .navigationBarTitle("Edit Project", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                },
-                trailing: Button("Save") {
-                    saveChanges()
-                    presentationMode.wrappedValue.dismiss()
+            .navigationTitle("Edit Project")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
-            )
-            .onAppear {
-                loadProjectDetails()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveChanges()
+                        dismiss()
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                }
             }
+            .onAppear { loadProjectDetails() }
         }
     }
 

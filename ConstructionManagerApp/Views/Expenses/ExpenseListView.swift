@@ -6,17 +6,21 @@ struct ExpenseListView: View {
     @State private var selectedExpense: Expense? = nil
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(expenses) { expense in
                     Button(action: {
                         selectedExpense = expense
                     }) {
                         ExpenseRowView(expense: expense)
+                            .listRowBackground(Color.appBackground)
                     }
                 }
                 .onDelete(perform: deleteExpense)
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
             .navigationTitle("Expenses")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -31,19 +35,27 @@ struct ExpenseListView: View {
                 AddExpenseView(expenses: $expenses)
             }
             .sheet(item: $selectedExpense) { expense in
-                EditExpenseView(expense: $selectedExpense)
+                EditExpenseView(expense: $selectedExpense) { updated in
+                    if let index = expenses.firstIndex(where: { $0.id == updated.id }) {
+                        expenses[index] = updated
+                    }
+                    CoreDataManager.shared.createExpense(from: updated, for: nil)
+                    selectedExpense = nil
+                }
             }
         }
     }
 
     private func deleteExpense(at offsets: IndexSet) {
+        for index in offsets {
+            CoreDataManager.shared.deleteExpense(expenses[index])
+        }
         expenses.remove(atOffsets: offsets)
-        // Optionally, delete from Core Data or backend
     }
 }
 
-struct ExpenseListView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    ThemedPreview(theme: .brand) {
         ExpenseListView()
     }
 }

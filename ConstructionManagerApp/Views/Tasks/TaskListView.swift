@@ -4,30 +4,33 @@ struct TaskListView: View {
     var project: Project
     @State private var tasks: [Task] = []
     @State private var isAddingTask = false
+    @State private var showErrorAlert = false
+    @State private var alertMessage: String? = nil
 
     var body: some View {
-        NavigationView {
-            VStack {
+        NavigationStack {
+            Group {
                 if tasks.isEmpty {
-                    // Show a placeholder message when the task list is empty
-                    VStack {
+                    VStack(spacing: DS.m) {
                         Text("No tasks available for this project.")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                            .padding()
+                            .font(DS.subtitle)
+                            .foregroundColor(DS.dim(0.6))
+                            .padding(DS.m)
                         Button(action: {
                             isAddingTask = true
                         }) {
                             Label("Add Task", systemImage: "plus")
-                                .font(.headline)
-                                .padding()
-                                .background(Color.blue)
+                                .font(DS.subtitle)
+                                .padding(.vertical, DS.m)
+                                .padding(.horizontal, DS.l)
+                                .background(Color.appAccent)
                                 .foregroundColor(.white)
-                                .cornerRadius(10)
+                                .cornerRadius(DS.cornerRadius)
                         }
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.appBackground)
                 } else {
-                    // Show the list of tasks
                     List {
                         ForEach(tasks) { task in
                             TaskRowView(
@@ -35,9 +38,13 @@ struct TaskListView: View {
                                 toggleCompletion: { toggleTaskCompletion(task) },
                                 updateStatus: { newStatus in updateTaskStatus(task, to: newStatus) }
                             )
+                            .listRowBackground(Color.appBackground)
                         }
                         .onDelete(perform: deleteTask)
                     }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.appBackground)
                 }
             }
             .navigationTitle("\(project.name ?? "Project") Tasks")
@@ -57,6 +64,9 @@ struct TaskListView: View {
                 loadTasks()
             }
         }
+        .alert(isPresented: $showErrorAlert) {
+            Alert(title: Text("Update Failed"), message: Text(alertMessage ?? "An unknown error occurred."), dismissButton: .default(Text("OK")))
+        }
     }
 
     private func loadTasks() {
@@ -66,14 +76,26 @@ struct TaskListView: View {
     private func toggleTaskCompletion(_ task: Task) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[index].isCompleted.toggle()
-            CoreDataManager.shared.saveContext()
+            let success = CoreDataManager.shared.updateTask(tasks[index])
+            if !success {
+                // revert local change if persistence failed
+                tasks[index].isCompleted.toggle()
+                alertMessage = "Failed to update task completion. Please try again."
+                showErrorAlert = true
+            }
         }
     }
 
     private func updateTaskStatus(_ task: Task, to newStatus: TaskStatus) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
+            let previous = tasks[index].status
             tasks[index].status = newStatus
-            CoreDataManager.shared.saveContext()
+            let success = CoreDataManager.shared.updateTask(tasks[index])
+            if !success {
+                tasks[index].status = previous
+                alertMessage = "Failed to update task status. Please try again."
+                showErrorAlert = true
+            }
         }
     }
 

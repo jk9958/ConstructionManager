@@ -5,16 +5,20 @@ struct ProjectListView: View {
     @State private var isAddingProject = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(viewModel.projects) { project in
                     NavigationLink(destination: ProjectDetailView(project: project)) {
                         ProjectCardView(project: project)
-                            .padding(.vertical, 4)
+                            .padding(.vertical, DS.s)
+                            .listRowBackground(Color.appBackground)
                     }
                 }
                 .onDelete(perform: deleteProject)
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -32,15 +36,12 @@ struct ProjectListView: View {
     }
 
     private func deleteProject(at offsets: IndexSet) {
-        for index in offsets {
-            viewModel.projects.remove(at: index)
-            // Optionally, delete from Core Data
-        }
+        viewModel.deleteProject(at: offsets)
     }
 }
 
-struct ProjectListView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    ThemedPreview(theme: .brand) {
         ProjectListView()
     }
 }

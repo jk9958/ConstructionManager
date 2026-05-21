@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EditExpenseView: View {
     @Binding var expense: Expense?
+    var onSave: (Expense) -> Void
 
     @State private var title: String = ""
     @State private var description: String = ""
@@ -12,7 +13,7 @@ struct EditExpenseView: View {
     let categories = ["Materials", "Labor", "Equipment", "Miscellaneous"]
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Expense Details")) {
                     TextField("Title", text: $title)
@@ -30,19 +31,21 @@ struct EditExpenseView: View {
                     DatePicker("Date", selection: $date, displayedComponents: .date)
                 }
             }
-            .navigationBarTitle("Edit Expense", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    expense = nil
-                },
-                trailing: Button("Save") {
-                    saveChanges()
-                    expense = nil
+            .navigationTitle("Edit Expense")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { expense = nil }
                 }
-            )
-            .onAppear {
-                loadExpenseDetails()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveChanges()
+                        expense = nil
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                }
             }
+            .onAppear { loadExpenseDetails() }
         }
     }
 
@@ -56,11 +59,13 @@ struct EditExpenseView: View {
     }
 
     private func saveChanges() {
-        guard var expense = expense else { return }
-        expense.title = title
-        expense.expenseDescription = description
-        expense.amount = amount
-        expense.category = category
-        expense.date = date
+        guard var updated = expense else { return }
+        updated.title = title
+        updated.expenseDescription = description
+        updated.amount = amount
+        updated.category = category
+        updated.date = date
+        updated.updatedAt = Date()
+        onSave(updated)
     }
 }

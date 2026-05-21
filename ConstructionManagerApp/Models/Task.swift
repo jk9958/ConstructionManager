@@ -2,6 +2,7 @@ import Foundation
 
 struct Task: Identifiable, Codable, Equatable, Hashable {
     var id = UUID()
+    var projectId: UUID?
     var title: String
     var taskDescription: String?
     var isCompleted: Bool
@@ -15,10 +16,14 @@ struct Task: Identifiable, Codable, Equatable, Hashable {
     var updatedAt: Date?
     var dependencies: [UUID]?
 
-    // Computed property for completion percentage
     var completionPercentage: Double {
-        guard durationInDays > 0 else { return 0.0 }
-        return isCompleted ? 100.0 : 0.0
+        if isCompleted || status == .completed { return 100.0 }
+        guard status == .inProgress, let deadline = deadline, deadline > startDate else {
+            return status == .notStarted ? 0.0 : 50.0
+        }
+        let total = deadline.timeIntervalSince(startDate)
+        let elapsed = Date().timeIntervalSince(startDate)
+        return min(max((elapsed / total) * 100.0, 0.0), 99.0)
     }
 
     static func == (lhs: Task, rhs: Task) -> Bool {

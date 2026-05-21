@@ -20,6 +20,7 @@ extension DocumentPermissionEntity {
     @NSManaged public var expiresAt: Date?
     @NSManaged public var grantedAt: Date?
     @NSManaged public var grantedBy: UUID?
+    @NSManaged public var id: UUID?
     @NSManaged public var userId: UUID?
     @NSManaged public var document: DocumentEntity?
 

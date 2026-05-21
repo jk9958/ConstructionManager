@@ -3,19 +3,24 @@ import SwiftUI
 struct ProjectDetailView: View {
     @State var project: Project
     @State private var isAddingTask = false
+    @State private var isAddingExpense = false
     @State private var tasks: [Task] = []
+    @State private var expenses: [Expense] = []
+    @State private var showErrorAlert = false
+    @State private var alertMessage: String? = nil
     @State private var selectedTask: Task? = nil // State to track the selected task
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: DS.l) {
                 projectHeader
                 projectDetails
                 projectDates
                 tasksSection
                 expensesSection
             }
-            .padding()
+            .padding(DS.l)
+            .background(Color.appBackground)
         }
         .navigationTitle("Project Details")
         .toolbar {
@@ -26,75 +31,105 @@ struct ProjectDetailView: View {
                     Image(systemName: "plus")
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    let result = SyncManager.shared.exportAllData()
+                    switch result {
+                    case .success(let url):
+                        alertMessage = "Exported data to: \(url.lastPathComponent)"
+                        showErrorAlert = true
+                    case .failure(let err):
+                        alertMessage = "Export failed: \(err.localizedDescription)"
+                        showErrorAlert = true
+                    }
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
         }
         .sheet(isPresented: $isAddingTask, onDismiss: {
             refreshTasks()
         }) {
             AddTaskView(project: project)
         }
+        .sheet(isPresented: $isAddingExpense, onDismiss: {
+            refreshExpenses()
+        }) {
+            AddExpenseView(expenses: $expenses, project: project)
+        }
         .onAppear {
             refreshTasks()
+            refreshExpenses()
+        }
+        .onChange(of: expenses) { newValue in
+            project.expenses = newValue
+        }
+        .alert(isPresented: $showErrorAlert) {
+            Alert(title: Text("Update Failed"), message: Text(alertMessage ?? "An unknown error occurred."), dismissButton: .default(Text("OK")))
         }
     }
 
     // MARK: - Components
 
     private var projectHeader: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.s) {
             Text(project.name ?? "Untitled Project")
-                .font(.largeTitle)
+                .font(DS.title)
                 .fontWeight(.bold)
             Text(project.projectDescription ?? "No description available")
-                .font(.body)
-                .foregroundColor(.gray)
+                .font(DS.body)
+                .foregroundColor(DS.dim(0.6))
         }
     }
 
     private var projectDetails: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.s) {
             detailRow(title: "Priority:", value: project.priority ?? "N/A")
             detailRow(title: "Status:", value: project.status ?? "N/A")
-            detailRow(title: "Budget:", value: String(format: "$%.2f", project.budget)) // Format the budget
+            detailRow(title: "Budget:", value: String(format: "$%.2f", project.budget))
             detailRow(title: "Location:", value: project.location ?? "N/A")
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
     }
 
     private var projectDates: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.s) {
             detailRow(title: "Start Date:", value: project.startDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
             detailRow(title: "Expected End Date:", value: project.expectedEndDate?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
     }
 
     private var tasksSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.s) {
             Text("Tasks")
-                .font(.headline)
+                .font(DS.subtitle)
+                .fontWeight(.semibold)
+                .accessibilityAddTraits(.isHeader)
             if tasks.isEmpty {
-                VStack {
+                VStack(spacing: DS.s) {
                     Text("No tasks available.")
-                        .foregroundColor(.gray)
-                        .padding()
+                        .foregroundColor(DS.dim(0.6))
+                        .padding(DS.m)
                     Button(action: {
                         isAddingTask = true
                     }) {
                         Label("Add Task", systemImage: "plus")
-                            .font(.headline)
-                            .padding()
-                            .background(Color.blue)
+                            .font(DS.body)
+                            .padding(.vertical, DS.m)
+                            .padding(.horizontal, DS.l)
+                            .background(Color.appAccent)
                             .foregroundColor(.white)
-                            .cornerRadius(10)
+                            .cornerRadius(DS.cornerRadius)
                     }
                 }
-                .padding()
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(10)
+                .padding(DS.m)
+                .background(Color.appCard)
+                .cornerRadius(DS.cornerRadius)
             } else {
                 ForEach(tasks) { task in
                     NavigationLink(
@@ -111,39 +146,60 @@ struct ProjectDetailView: View {
                                 updateTaskStatus(task: task, to: newStatus)
                             }
                         )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
+                    .buttonStyle(PlainButtonStyle())
+                    .accessibilityHint("Opens task details")
                 }
             }
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
     }
 
     private var expensesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.s) {
             Text("Expenses")
-                .font(.headline)
-            if let expenses = project.expenses, !expenses.isEmpty {
+                .font(DS.subtitle)
+                .fontWeight(.semibold)
+            HStack {
+                Text("Expenses")
+                    .font(DS.subtitle)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button(action: {
+                    isAddingExpense = true
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(.appAccent)
+                        .font(.title3)
+                }
+                .accessibilityLabel("Add Expense")
+            }
+            if expenses.isEmpty {
+                Text("No expenses available.")
+                    .foregroundColor(DS.dim(0.6))
+                    .padding(DS.m)
+                    .background(Color.appCard)
+                    .cornerRadius(DS.cornerRadius)
+            } else {
                 ForEach(expenses) { expense in
                     HStack {
                         Text(expense.title)
+                            .font(DS.body)
                         Spacer()
                         Text("$\(expense.amount, specifier: "%.2f")")
-                            .font(.caption)
+                            .font(DS.caption)
+                            .foregroundColor(.appAccent)
                     }
+                    .padding(.vertical, DS.s)
                 }
-            } else {
-                Text("No expenses available.")
-                    .foregroundColor(.gray)
-                    .padding()
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(10)
             }
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
     }
 
     // MARK: - Helper Methods
@@ -161,24 +217,45 @@ struct ProjectDetailView: View {
         tasks = CoreDataManager.shared.fetchTasks(forProjectId: project.id)
     }
 
+    private func refreshExpenses() {
+        if let updatedProject = CoreDataManager.shared.fetchProjectModel(project.id) {
+            expenses = updatedProject.expenses ?? []
+            project.expenses = updatedProject.expenses
+        } else {
+            expenses = project.expenses ?? []
+        }
+    }
+
     private func toggleTaskCompletion(task: Task) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[index].isCompleted.toggle() // Toggle the completion status
-            CoreDataManager.shared.updateTask(tasks[index]) // Save the updated task to Core Data
+            let success = CoreDataManager.shared.updateTask(tasks[index]) // Save the updated task to Core Data
+            if !success {
+                tasks[index].isCompleted.toggle()
+                alertMessage = "Failed to update task completion. Please try again."
+                showErrorAlert = true
+            }
         }
     }
 
     private func updateTaskStatus(task: Task, to newStatus: TaskStatus) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
+            let previous = tasks[index].status
             tasks[index].status = newStatus // Update the task status
-            CoreDataManager.shared.updateTask(tasks[index]) // Save the updated task to Core Data
+            let success = CoreDataManager.shared.updateTask(tasks[index]) // Save the updated task to Core Data
+            if !success {
+                tasks[index].status = previous
+                alertMessage = "Failed to update task status. Please try again."
+                showErrorAlert = true
+            }
         }
     }
+
 }
 
-struct ProjectDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
+#Preview {
+    ThemedPreview(theme: .brand) {
+        NavigationStack {
             ProjectDetailView(
                 project: Project(
                     id: UUID(),

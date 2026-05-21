@@ -290,6 +290,7 @@
 				CODE_SIGN_ENTITLEMENTS = ConstructionManagerApp/ConstructionManagerApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UQCBJ637MT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ConstructionManagerApp/Info.plist;
@@ -319,6 +320,7 @@
 				CODE_SIGN_ENTITLEMENTS = ConstructionManagerApp/ConstructionManagerApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UQCBJ637MT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ConstructionManagerApp/Info.plist;

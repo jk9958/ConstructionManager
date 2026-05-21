@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct EditTaskView: View {
-    @Binding var task: Task?
-    var project: Project
-    @Environment(\.presentationMode) var presentationMode
+    @Binding var task: Task
+    @Environment(\.dismiss) private var dismiss
+    var project: Project? {
+        CoreDataManager.shared.fetchProjectModel(task.projectId ?? UUID())
+    }
 
     @State private var title: String = ""
     @State private var description: String = ""
@@ -12,16 +14,19 @@ struct EditTaskView: View {
     @State private var startDate: Date = Date()
     @State private var deadline: Date = Date().oneYearLater
     @State private var isCompleted: Bool = false
+    @State private var showErrorAlert = false
+    @State private var alertMessage: String? = nil
 
     let priorities = TaskPriority.allCases
     let statuses = TaskStatus.allCases
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Task Details")) {
                     TextField("Title", text: $title)
                     TextField("Description", text: $description)
+                        .accessibilityLabel("Task description")
                     Picker("Priority", selection: $priority) {
                         ForEach(priorities, id: \.self) { priority in
                             Text(priority.rawValue.capitalized)
@@ -37,27 +42,30 @@ struct EditTaskView: View {
 
                 Section(header: Text("Dates")) {
                     DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                    DatePicker("Deadline", selection: $deadline, displayedComponents: .date)
+                    DatePicker("Deadline", selection: $deadline, in: startDate..., displayedComponents: .date)
                 }
             }
-            .navigationBarTitle("Edit Task", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button("Cancel") {
-                    presentationMode.wrappedValue.dismiss()
-                },
-                trailing: Button("Save") {
-                    saveChanges()
-                    presentationMode.wrappedValue.dismiss()
+            .navigationTitle("Edit Task")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
-            )
-            .onAppear {
-                loadTaskDetails()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        withAnimation(.easeInOut) { saveChanges() }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                }
             }
+            .onAppear { loadTaskDetails() }
+        }
+        .alert(isPresented: $showErrorAlert) {
+            Alert(title: Text("Save Failed"), message: Text(alertMessage ?? "An unknown error occurred."), dismissButton: .default(Text("OK")))
         }
     }
 
     private func loadTaskDetails() {
-        guard let task = task else { return }
         title = task.title
         description = task.taskDescription ?? ""
         priority = task.priority
@@ -68,7 +76,6 @@ struct EditTaskView: View {
     }
 
     private func saveChanges() {
-        guard var task = task else { return }
         task.title = title
         task.taskDescription = description
         task.priority = priority
@@ -76,11 +83,19 @@ struct EditTaskView: View {
         task.startDate = startDate
         task.deadline = deadline
         task.isCompleted = isCompleted
+        let success = CoreDataManager.shared.updateTask(task)
+        if success {
+            dismiss()
+        } else {
+            alertMessage = "Failed to update task. Please try again."
+            showErrorAlert = true
+        }
     }
+
+    
 }
 
 extension Binding where Value == Date? {
-    /// Provides a binding that replaces `nil` with a default value.
     init(_ source: Binding<Date?>, replacingNilWith defaultValue: Date) {
         self.init(
             get: { source.wrappedValue ?? defaultValue },
@@ -89,8 +104,8 @@ extension Binding where Value == Date? {
     }
 }
 
-struct EditTaskView_Previews: PreviewProvider {
-    @State static var task: Task? = Task(
+#Preview {
+    @Previewable @State var task = Task(
         id: UUID(),
         title: "Excavation",
         taskDescription: "Excavate the site for foundation",
@@ -104,25 +119,7 @@ struct EditTaskView_Previews: PreviewProvider {
         createdAt: Date(),
         updatedAt: nil
     )
-    static var project = Project(
-        id: UUID(),
-        name: "Construction Project",
-        projectDescription: "A large-scale construction project",
-        priority: "High",
-        status: "In Progress",
-        budget: 100000,
-        location: "New York",
-        startDate: Date(),
-        expectedEndDate: Date().addingTimeInterval(86400 * 365),
-        createdAt: Date(),
-        updatedAt: nil,
-        documents: [],
-        expenses: [],
-        tasks: [],
-        team: nil
-    )
-
-    static var previews: some View {
-        EditTaskView(task: $task, project: project)
+    ThemedPreview(theme: .brand) {
+        EditTaskView(task: $task)
     }
 }

@@ -5,24 +5,27 @@ struct ExpenseRowView: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: DS.s) {
                 Text(expense.title)
-                    .font(.headline)
+                    .font(DS.body)
+                    .foregroundColor(.primary)
                 Text(expense.expenseDescription ?? "No description available")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .font(DS.caption)
+                    .foregroundColor(DS.dim(0.6))
             }
             Spacer()
             Text("$\(expense.amount, specifier: "%.2f")")
-                .font(.subheadline)
-                .foregroundColor(.blue)
+                .font(DS.subtitle)
+                .foregroundColor(.appAccent)
         }
-        .padding(.vertical, 4)
+        .padding(DS.m)
+        .background(Color.appCard)
+        .cornerRadius(DS.cornerRadius)
     }
 }
 
-struct ExpenseRowView_Previews: PreviewProvider {
-    static var previews: some View {
+#Preview {
+    ThemedPreview(theme: .brand) {
         ExpenseRowView(
             expense: Expense(
                 id: UUID(),

@@ -4,13 +4,12 @@ struct DailyLog: Identifiable {
     var id = UUID()
     var date: Date
     var progress: String
-    var photo: Image?
 }
 
 struct DailyLogView: View {
     @State private var logs: [DailyLog] = [
-        DailyLog(date: Date(), progress: "Foundation completed", photo: nil),
-        DailyLog(date: Date().addingTimeInterval(-86400), progress: "Materials delivered", photo: nil)
+        DailyLog(date: Date(), progress: "Foundation completed"),
+        DailyLog(date: Date().addingTimeInterval(-86400), progress: "Materials delivered")
     ]
     @State private var newProgress: String = ""
 
@@ -30,7 +29,7 @@ struct DailyLogView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 Button(action: {
                     if !newProgress.isEmpty {
-                        logs.append(DailyLog(date: Date(), progress: newProgress, photo: nil))
+                        logs.append(DailyLog(date: Date(), progress: newProgress))
                         newProgress = ""
                     }
                 }) {
@@ -45,8 +44,6 @@ struct DailyLogView: View {
     }
 }
 
-struct DailyLogView_Previews: PreviewProvider {
-    static var previews: some View {
-        DailyLogView()
-    }
+#Preview {
+    DailyLogView()
 }

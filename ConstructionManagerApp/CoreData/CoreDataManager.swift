@@ -7,42 +7,85 @@ class CoreDataManager {
     let persistentContainer: NSPersistentContainer
 
     private init() {
-        persistentContainer = NSPersistentContainer(name: "ConstructionManager") // Match your .xcdatamodeld file name
+        persistentContainer = NSPersistentContainer(name: "ConstructionManager")
         persistentContainer.loadPersistentStores { _, error in
             if let error = error {
+                #if DEBUG
                 fatalError("Failed to load Core Data stack: \(error)")
+                #else
+                let description = NSPersistentStoreDescription()
+                description.type = NSInMemoryStoreType
+                self.persistentContainer.persistentStoreDescriptions = [description]
+                self.persistentContainer.loadPersistentStores { _, _ in }
+                #endif
             }
         }
+        persistentContainer.viewContext.automaticallyMergesChangesFromParent = true
     }
 
     var context: NSManagedObjectContext {
         return persistentContainer.viewContext
     }
 
-    func saveContext() {
-        if context.hasChanges {
+    @discardableResult
+    func saveContext() -> Bool {
+        guard context.hasChanges else { return true }
+        var success = true
+        context.performAndWait {
             do {
                 try context.save()
             } catch {
                 print("Failed to save context: \(error)")
+                success = false
             }
         }
+        return success
     }
 }
 
 extension CoreDataManager {
     // MARK: - TaskEntity CRUD
-    func createTask(from task: Task, forProjectId id: UUID) {
-        let taskEntity = TaskEntity(context: context)
+    private func fetchOrCreateTaskEntity(id: UUID) -> TaskEntity {
+        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        if let existing = try? context.fetch(fetchRequest).first {
+            return existing
+        }
+        return TaskEntity(context: context)
+    }
+
+    private func fetchOrCreateExpenseEntity(id: UUID) -> ExpenseEntity {
+        let fetchRequest: NSFetchRequest<ExpenseEntity> = ExpenseEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        if let existing = try? context.fetch(fetchRequest).first {
+            return existing
+        }
+        return ExpenseEntity(context: context)
+    }
+
+    private func fetchOrCreateDocumentEntity(id: UUID) -> DocumentEntity {
+        let fetchRequest: NSFetchRequest<DocumentEntity> = DocumentEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        if let existing = try? context.fetch(fetchRequest).first {
+            return existing
+        }
+        return DocumentEntity(context: context)
+    }
+
+    @discardableResult
+    func createTask(from task: Task, forProjectId id: UUID) -> Bool {
+        let taskEntity = fetchOrCreateTaskEntity(id: task.id)
         taskEntity.id = task.id
-        taskEntity.title = task.title
-        taskEntity.taskDescription = task.taskDescription
+        // Provide safe defaults for non-optional model attributes
+        taskEntity.title = task.title.isEmpty ? "Untitled" : task.title
+        taskEntity.taskDescription = task.taskDescription ?? "No description provided"
         taskEntity.isCompleted = task.isCompleted
         taskEntity.priority = task.priority.rawValue
-        taskEntity.dueDate = task.deadline
-        taskEntity.startDate = task.startDate
+        // dueDate and startDate are required in the model; fall back to sensible defaults
+        taskEntity.startDate = task.startDate ?? Date()
+        taskEntity.dueDate = task.deadline ?? task.startDate ?? Date()
         taskEntity.status = task.status.rawValue
-        taskEntity.createdAt = task.createdAt
+        taskEntity.createdAt = task.createdAt ?? Date()
         taskEntity.updatedAt = task.updatedAt ?? Date()
         taskEntity.completionPercentage = task.completionPercentage
 
@@ -61,7 +104,15 @@ extension CoreDataManager {
             taskEntity.dependencies = NSSet(array: dependencyEntities)
         }
 
-        saveContext()
+        let success = saveContext()
+        if !success {
+            // queue offline operation for remote sync
+            if let payload = try? JSONEncoder().encode(task) {
+                let op = OfflineOperation(type: .create, entityName: "Task", payload: payload)
+                OfflineOperationQueue.shared.enqueue(op)
+            }
+        }
+        return success
     }
 
     func fetchTasks() -> [Task] {
@@ -72,6 +123,7 @@ extension CoreDataManager {
                 let durationInDays = calculateDurationInDays(startDate: taskEntity.startDate, dueDate: taskEntity.dueDate)
                 return Task(
                     id: taskEntity.id ?? UUID(),
+                    projectId: taskEntity.project?.id,
                     title: taskEntity.title ?? "Untitled",
                     taskDescription: taskEntity.taskDescription,
                     isCompleted: taskEntity.isCompleted,
@@ -137,7 +189,21 @@ extension CoreDataManager {
     }
 
     // MARK: - DocumentEntity CRUD
-    func createDocument(from document: Document, for project: ProjectEntity?) {
+//    func createDocument(from document: Document, for project: ProjectEntity?) {
+//        let documentEntity = DocumentEntity(context: context)
+//        documentEntity.id = document.id
+//        documentEntity.name = document.name
+//        documentEntity.documentDescription = document.documentDescription
+//        documentEntity.documentType = document.documentType
+//        documentEntity.data = document.data
+//        documentEntity.updatedAt = document.updatedAt
+//        documentEntity.project = project
+//
+//        saveContext()
+//    }
+
+    @discardableResult
+    func createDocument(from document: Document, for project: ProjectEntity?) -> Bool {
         let documentEntity = DocumentEntity(context: context)
         documentEntity.id = document.id
         documentEntity.name = document.name
@@ -147,7 +213,62 @@ extension CoreDataManager {
         documentEntity.updatedAt = document.updatedAt
         documentEntity.project = project
 
-        saveContext()
+        return saveContext()
+    }
+
+    // MARK: - TeamEntity CRUD
+    private func fetchOrCreateTeamEntity(id: UUID) -> TeamEntity {
+        let fetchRequest: NSFetchRequest<TeamEntity> = TeamEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        if let existing = try? context.fetch(fetchRequest).first {
+            return existing
+        }
+        return TeamEntity(context: context)
+    }
+
+    func createTeam(from team: Team) -> Bool {
+        let teamEntity = fetchOrCreateTeamEntity(id: team.id)
+        teamEntity.id = team.id
+        teamEntity.name = team.name
+        teamEntity.createdAt = team.createdAt
+        teamEntity.createdBy = team.createdBy
+        teamEntity.updatedAt = team.updatedAt
+
+        // handle members relationship
+        if let members = team.members {
+            let userEntities = members.map { user -> UserEntity in
+                let ue = UserEntity(context: context)
+                ue.id = user.id
+                ue.displayName = user.displayName
+                ue.email = user.email
+                ue.role = user.role
+                return ue
+            }
+            teamEntity.members = NSSet(array: userEntities)
+        }
+
+        return saveContext()
+    }
+
+    func fetchTeams() -> [Team] {
+        let fetchRequest: NSFetchRequest<TeamEntity> = TeamEntity.fetchRequest()
+        do {
+            let teamEntities = try context.fetch(fetchRequest)
+            return teamEntities.map { teamEntity in
+                Team(
+                    id: teamEntity.id ?? UUID(),
+                    name: teamEntity.name,
+                    createdAt: teamEntity.createdAt,
+                    createdBy: teamEntity.createdBy,
+                    updatedAt: teamEntity.updatedAt,
+                    members: fetchUsers(from: teamEntity.members),
+                    projects: fetchProjects(from: teamEntity.projects)
+                )
+            }
+        } catch {
+            print("Failed to fetch teams: \(error)")
+            return []
+        }
     }
 
     func fetchDocuments(for project: ProjectEntity?) -> [Document] {
@@ -191,8 +312,9 @@ extension CoreDataManager {
 
     // MARK: - ExpenseEntity CRUD
     func createExpense(from expense: Expense, for project: ProjectEntity?) {
-        let expenseEntity = ExpenseEntity(context: context)
+        let expenseEntity = fetchOrCreateExpenseEntity(id: expense.id)
         expenseEntity.id = expense.id
+        expenseEntity.title = expense.title
         expenseEntity.expenseDescription = expense.expenseDescription
         expenseEntity.amount = expense.amount
         expenseEntity.category = expense.category
@@ -252,8 +374,17 @@ extension CoreDataManager {
     }
 
     // MARK: - ProjectEntity CRUD
+    private func fetchOrCreateProjectEntity(id: UUID) -> ProjectEntity {
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        if let existing = try? context.fetch(fetchRequest).first {
+            return existing
+        }
+        return ProjectEntity(context: context)
+    }
+
     func createProject(from project: Project) {
-        let projectEntity = ProjectEntity(context: context)
+        let projectEntity = fetchOrCreateProjectEntity(id: project.id)
         projectEntity.id = project.id
         projectEntity.name = project.name
         projectEntity.projectDescription = project.projectDescription
@@ -269,7 +400,7 @@ extension CoreDataManager {
         // Handle `documents` relationship
         if let documents = project.documents {
             let documentEntities = documents.map { document in
-                let documentEntity = DocumentEntity(context: context)
+                let documentEntity = fetchOrCreateDocumentEntity(id: document.id)
                 documentEntity.id = document.id
                 documentEntity.name = document.name
                 documentEntity.documentDescription = document.documentDescription
@@ -284,8 +415,9 @@ extension CoreDataManager {
         // Handle `expenses` relationship
         if let expenses = project.expenses {
             let expenseEntities = expenses.map { expense in
-                let expenseEntity = ExpenseEntity(context: context)
+                let expenseEntity = fetchOrCreateExpenseEntity(id: expense.id)
                 expenseEntity.id = expense.id
+                expenseEntity.title = expense.title
                 expenseEntity.expenseDescription = expense.expenseDescription
                 expenseEntity.amount = expense.amount
                 expenseEntity.category = expense.category
@@ -303,7 +435,7 @@ extension CoreDataManager {
         // Handle `tasks` relationship
         if let tasks = project.tasks {
             let taskEntities = tasks.map { task in
-                let taskEntity = TaskEntity(context: context)
+                let taskEntity = fetchOrCreateTaskEntity(id: task.id)
                 taskEntity.id = task.id
                 taskEntity.title = task.title
                 taskEntity.taskDescription = task.taskDescription
@@ -358,6 +490,35 @@ extension CoreDataManager {
         do {
             let projectEntity = try context.fetch(fetchRequest)
             return projectEntity.first
+        } catch {
+            print("Failed to delete project: \(error)")
+            return nil
+        }
+    }
+
+    func fetchProjectModel(_ id: UUID) -> Project? {
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        do {
+            guard let projectEntity = try context.fetch(fetchRequest).first else { return nil }
+            return Project(
+                id: projectEntity.id ?? UUID(),
+                name: projectEntity.name,
+                projectDescription: projectEntity.projectDescription,
+                priority: projectEntity.priority,
+                status: projectEntity.status,
+                budget: projectEntity.budget,
+                location: projectEntity.location,
+                startDate: projectEntity.startDate,
+                expectedEndDate: projectEntity.expectedEndDate,
+                createdAt: projectEntity.createdAt,
+                updatedAt: projectEntity.updatedAt,
+                documents: fetchDocuments(from: projectEntity.documents),
+                expenses: fetchExpenses(from: projectEntity.expenses),
+                tasks: fetchTasks(from: projectEntity.tasks),
+                team: fetchTeam(from: projectEntity.team)
+            )
         } catch {
             print("Failed to delete project: \(error)")
             return nil
@@ -541,26 +702,76 @@ extension CoreDataManager {
 }
 
 extension CoreDataManager {
-    func updateTask(_ task: Task) {
-        let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", task.id as CVarArg)
-
+    func updateProject(from project: Project) {
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", project.id as CVarArg)
         do {
-            let taskEntities = try context.fetch(fetchRequest)
-            if let taskEntity = taskEntities.first {
-                taskEntity.title = task.title
-                taskEntity.taskDescription = task.taskDescription
-                taskEntity.isCompleted = task.isCompleted
-                taskEntity.priority = task.priority.rawValue
-                taskEntity.dueDate = task.deadline
-                taskEntity.startDate = task.startDate
-                taskEntity.status = task.status.rawValue
-                taskEntity.updatedAt = Date()
-
-                saveContext()
-            }
+            guard let projectEntity = try context.fetch(fetchRequest).first else { return }
+            projectEntity.name = project.name
+            projectEntity.projectDescription = project.projectDescription
+            projectEntity.priority = project.priority
+            projectEntity.status = project.status
+            projectEntity.budget = project.budget
+            projectEntity.location = project.location
+            projectEntity.startDate = project.startDate
+            projectEntity.expectedEndDate = project.expectedEndDate
+            projectEntity.updatedAt = Date()
+            saveContext()
         } catch {
-            print("Failed to update task: \(error)")
+            print("Failed to update project: \(error)")
         }
+    }
+
+    @discardableResult
+    func updateTask(_ task: Task) -> Bool {
+        // Use fetchOrCreate to ensure the entity exists and relationships are updated
+        let taskEntity = fetchOrCreateTaskEntity(id: task.id)
+
+        taskEntity.id = task.id
+        taskEntity.title = task.title
+        taskEntity.taskDescription = task.taskDescription
+        taskEntity.isCompleted = task.isCompleted
+        taskEntity.priority = task.priority.rawValue
+        taskEntity.dueDate = task.deadline
+        taskEntity.startDate = task.startDate
+        taskEntity.status = task.status.rawValue
+        taskEntity.completionPercentage = task.completionPercentage
+        // Preserve createdAt if already set, otherwise set from model
+        if taskEntity.createdAt == nil {
+            taskEntity.createdAt = task.createdAt
+        }
+        taskEntity.updatedAt = task.updatedAt ?? Date()
+
+        // Assign or update project relationship
+        if let projectId = task.projectId, let projectEntity = fetchProject(projectId) {
+            taskEntity.project = projectEntity
+        }
+
+        // Update assignedTo relationship
+        if let assignedTo = task.assignedTo {
+            let userEntities = fetchUsers(by: assignedTo)
+            taskEntity.assignedTo = NSSet(array: userEntities)
+        } else {
+            taskEntity.assignedTo = nil
+        }
+
+        // Update dependencies relationship
+        if let dependencies = task.dependencies {
+            let dependencyEntities = fetchTasks(by: dependencies)
+            taskEntity.dependencies = NSSet(array: dependencyEntities)
+        } else {
+            taskEntity.dependencies = nil
+        }
+
+        // Persist changes
+        let success = saveContext()
+        if !success {
+            print("Failed to persist updated task with id: \(task.id)")
+            if let payload = try? JSONEncoder().encode(task) {
+                let op = OfflineOperation(type: .update, entityName: "Task", payload: payload)
+                OfflineOperationQueue.shared.enqueue(op)
+            }
+        }
+        return success
     }
 }
