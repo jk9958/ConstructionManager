@@ -1,25 +1,40 @@
 import SwiftUI
 
 struct ExpenseListView: View {
-    @State private var expenses: [Expense] = []
+    @StateObject private var viewModel = ExpenseViewModel()
     @State private var isAddingExpense = false
     @State private var selectedExpense: Expense? = nil
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(expenses) { expense in
-                    Button(action: {
-                        selectedExpense = expense
-                    }) {
-                        ExpenseRowView(expense: expense)
-                            .listRowBackground(Color.appBackground)
+            Group {
+                if viewModel.expenses.isEmpty {
+                    ContentUnavailableView(
+                        "No Expenses",
+                        systemImage: "dollarsign.circle",
+                        description: Text("Tap + to record your first expense.")
+                    )
+                } else {
+                    List {
+                        Section {
+                            ForEach(viewModel.expenses) { expense in
+                                Button(action: {
+                                    selectedExpense = expense
+                                }) {
+                                    ExpenseRowView(expense: expense)
+                                }
+                                .listRowBackground(Color.appBackground)
+                            }
+                            .onDelete(perform: viewModel.removeExpense)
+                        } footer: {
+                            Text("Total: \(viewModel.total, format: .currency(code: "USD"))")
+                                .font(DS.subtitle)
+                        }
                     }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
                 }
-                .onDelete(perform: deleteExpense)
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
             .background(Color.appBackground)
             .navigationTitle("Expenses")
             .toolbar {
@@ -29,28 +44,22 @@ struct ExpenseListView: View {
                     }) {
                         Image(systemName: "plus")
                     }
+                    .accessibilityLabel("Add Expense")
                 }
             }
-            .sheet(isPresented: $isAddingExpense) {
-                AddExpenseView(expenses: $expenses)
+            .sheet(isPresented: $isAddingExpense, onDismiss: {
+                viewModel.loadExpenses()
+            }) {
+                AddExpenseView(expenses: $viewModel.expenses)
             }
-            .sheet(item: $selectedExpense) { expense in
+            .sheet(item: $selectedExpense) { _ in
                 EditExpenseView(expense: $selectedExpense) { updated in
-                    if let index = expenses.firstIndex(where: { $0.id == updated.id }) {
-                        expenses[index] = updated
-                    }
-                    CoreDataManager.shared.createExpense(from: updated, for: nil)
+                    viewModel.updateExpense(updated)
                     selectedExpense = nil
                 }
             }
+            .onAppear { viewModel.loadExpenses() }
         }
-    }
-
-    private func deleteExpense(at offsets: IndexSet) {
-        for index in offsets {
-            CoreDataManager.shared.deleteExpense(expenses[index])
-        }
-        expenses.remove(atOffsets: offsets)
     }
 }
 

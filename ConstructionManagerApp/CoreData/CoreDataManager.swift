@@ -1,5 +1,6 @@
 import Foundation
 import CoreData
+import os
 
 class CoreDataManager {
     static let shared = CoreDataManager()
@@ -35,7 +36,7 @@ class CoreDataManager {
             do {
                 try context.save()
             } catch {
-                print("Failed to save context: \(error)")
+                Logger.coreData.error("Failed to save context: \(error.localizedDescription, privacy: .public)")
                 success = false
             }
         }
@@ -138,7 +139,7 @@ extension CoreDataManager {
                 )
             }
         } catch {
-            print("Failed to fetch tasks: \(error)")
+            Logger.coreData.error("Failed to fetch tasks: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -169,7 +170,7 @@ extension CoreDataManager {
                 )
             }
         } catch {
-            print("Failed to fetch tasks: \(error)")
+            Logger.coreData.error("Failed to fetch tasks: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -184,7 +185,7 @@ extension CoreDataManager {
             }
             saveContext()
         } catch {
-            print("Failed to delete task: \(error)")
+            Logger.coreData.error("Failed to delete task: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -266,7 +267,7 @@ extension CoreDataManager {
                 )
             }
         } catch {
-            print("Failed to fetch teams: \(error)")
+            Logger.coreData.error("Failed to fetch teams: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -291,7 +292,7 @@ extension CoreDataManager {
                 )
             }
         } catch {
-            print("Failed to fetch documents: \(error)")
+            Logger.coreData.error("Failed to fetch documents: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -306,7 +307,7 @@ extension CoreDataManager {
             }
             saveContext()
         } catch {
-            print("Failed to delete document: \(error)")
+            Logger.coreData.error("Failed to delete document: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -354,7 +355,7 @@ extension CoreDataManager {
                 )
             }
         } catch {
-            print("Failed to fetch expenses: \(error)")
+            Logger.coreData.error("Failed to fetch expenses: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -369,7 +370,7 @@ extension CoreDataManager {
             }
             saveContext()
         } catch {
-            print("Failed to delete expense: \(error)")
+            Logger.coreData.error("Failed to delete expense: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -478,7 +479,7 @@ extension CoreDataManager {
                 )
             }
         } catch {
-            print("Failed to fetch projects: \(error)")
+            Logger.coreData.error("Failed to fetch projects: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -491,7 +492,7 @@ extension CoreDataManager {
             let projectEntity = try context.fetch(fetchRequest)
             return projectEntity.first
         } catch {
-            print("Failed to delete project: \(error)")
+            Logger.coreData.error("Failed to delete project: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -520,7 +521,7 @@ extension CoreDataManager {
                 team: fetchTeam(from: projectEntity.team)
             )
         } catch {
-            print("Failed to delete project: \(error)")
+            Logger.coreData.error("Failed to delete project: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -535,7 +536,7 @@ extension CoreDataManager {
             }
             saveContext()
         } catch {
-            print("Failed to delete project: \(error)")
+            Logger.coreData.error("Failed to delete project: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -546,7 +547,7 @@ extension CoreDataManager {
         do {
             return try context.fetch(fetchRequest)
         } catch {
-            print("Failed to fetch users: \(error)")
+            Logger.coreData.error("Failed to fetch users: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -562,7 +563,7 @@ extension CoreDataManager {
         do {
             return try context.fetch(fetchRequest)
         } catch {
-            print("Failed to fetch tasks: \(error)")
+            Logger.coreData.error("Failed to fetch tasks: \(error.localizedDescription, privacy: .public)")
             return []
         }
     }
@@ -718,7 +719,7 @@ extension CoreDataManager {
             projectEntity.updatedAt = Date()
             saveContext()
         } catch {
-            print("Failed to update project: \(error)")
+            Logger.coreData.error("Failed to update project: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -766,7 +767,7 @@ extension CoreDataManager {
         // Persist changes
         let success = saveContext()
         if !success {
-            print("Failed to persist updated task with id: \(task.id)")
+            Logger.coreData.error("Failed to persist updated task with id: \(task.id.uuidString, privacy: .public)")
             if let payload = try? JSONEncoder().encode(task) {
                 let op = OfflineOperation(type: .update, entityName: "Task", payload: payload)
                 OfflineOperationQueue.shared.enqueue(op)

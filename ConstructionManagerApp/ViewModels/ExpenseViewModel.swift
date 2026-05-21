@@ -2,58 +2,45 @@ import Foundation
 
 class ExpenseViewModel: ObservableObject {
     @Published var expenses: [Expense] = []
+    @Published var errorMessage: String?
 
-    init() {
-        // Load initial data or fetch from CoreData if needed
+    /// When set, the view model is scoped to a single project's expenses.
+    /// When `nil`, it manages every expense in the store.
+    private let projectId: UUID?
+
+    init(projectId: UUID? = nil) {
+        self.projectId = projectId
         loadExpenses()
     }
 
+    /// Total amount across the currently loaded expenses.
+    var total: Double {
+        expenses.reduce(0) { $0 + $1.amount }
+    }
+
     func loadExpenses() {
-        // Example: Load mock data or integrate with CoreDataManager
-        expenses = [
-            Expense(
-                id: UUID(),
-                title: "Cement purchase",
-                expenseDescription: "Purchased cement for foundation work",
-                amount: 200.0,
-                category: "Materials",
-                date: Date(),
-                status: "Approved",
-                submittedBy: "John Doe",
-                receiptURL: nil,
-                createdAt: Date(),
-                updatedAt: nil
-            ),
-            Expense(
-                id: UUID(),
-                title: "Equipment rental",
-                expenseDescription: "Rented excavator for site preparation",
-                amount: 150.0,
-                category: "Equipment",
-                date: Date(),
-                status: "Pending",
-                submittedBy: "Jane Smith",
-                receiptURL: nil,
-                createdAt: Date(),
-                updatedAt: nil
-            )
-        ]
+        let projectEntity = projectId.flatMap { CoreDataManager.shared.fetchProject($0) }
+        expenses = CoreDataManager.shared.fetchExpenses(for: projectEntity)
+            .sorted { $0.date > $1.date }
     }
 
     func addExpense(_ expense: Expense) {
-        expenses.append(expense)
-        // Save to CoreData if needed
-    }
-
-    func removeExpense(at index: Int) {
-        expenses.remove(at: index)
-        // Remove from CoreData if needed
+        let projectEntity = projectId.flatMap { CoreDataManager.shared.fetchProject($0) }
+        CoreDataManager.shared.createExpense(from: expense, for: projectEntity)
+        loadExpenses()
     }
 
     func updateExpense(_ expense: Expense) {
-        if let index = expenses.firstIndex(where: { $0.id == expense.id }) {
-            expenses[index] = expense
-            // Update in CoreData if needed
+        // `createExpense` uses fetch-or-create, so it doubles as an update.
+        let projectEntity = projectId.flatMap { CoreDataManager.shared.fetchProject($0) }
+        CoreDataManager.shared.createExpense(from: expense, for: projectEntity)
+        loadExpenses()
+    }
+
+    func removeExpense(at offsets: IndexSet) {
+        for index in offsets where expenses.indices.contains(index) {
+            CoreDataManager.shared.deleteExpense(expenses[index])
         }
+        loadExpenses()
     }
 }

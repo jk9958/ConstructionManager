@@ -5,6 +5,12 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
+            ProjectDashboardView()
+                .tabItem {
+                    Image(systemName: "square.grid.2x2.fill")
+                    Text("Dashboard")
+                }
+
             HomeView()
                 .tabItem {
                     Image(systemName: "house.fill")

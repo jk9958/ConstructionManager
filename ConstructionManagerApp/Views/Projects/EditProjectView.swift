@@ -16,6 +16,12 @@ struct EditProjectView: View {
     let priorities = ["Low", "Medium", "High"]
     let statuses = ["Not Started", "In Progress", "Completed"]
 
+    private var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && budget >= 0
+            && expectedEndDate >= startDate
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -50,6 +56,7 @@ struct EditProjectView: View {
                         saveChanges()
                         dismiss()
                     }
+                    .disabled(!isValid)
                     .buttonStyle(PrimaryButtonStyle())
                 }
             }

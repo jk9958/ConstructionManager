@@ -10,6 +10,12 @@ struct AddProjectView: View {
     @State private var endDate: Date = Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
     @State private var budget: Double = 0.0
 
+    private var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && budget >= 0
+            && endDate >= startDate
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -38,7 +44,7 @@ struct AddProjectView: View {
                         )
                         dismiss()
                     }
-                    .disabled(name.isEmpty)
+                    .disabled(!isValid)
                     .buttonStyle(PrimaryButtonStyle())
                 }
             }

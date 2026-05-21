@@ -160,13 +160,11 @@ struct ProjectDetailView: View {
 
     private var expensesSection: some View {
         VStack(alignment: .leading, spacing: DS.s) {
-            Text("Expenses")
-                .font(DS.subtitle)
-                .fontWeight(.semibold)
             HStack {
                 Text("Expenses")
                     .font(DS.subtitle)
                     .fontWeight(.semibold)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Button(action: {
                     isAddingExpense = true

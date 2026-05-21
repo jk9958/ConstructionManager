@@ -13,6 +13,11 @@ struct AddExpenseView: View {
 
     let categories = ["Materials", "Labor", "Equipment", "Miscellaneous"]
 
+    private var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && amount > 0
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -43,7 +48,7 @@ struct AddExpenseView: View {
                         saveExpense()
                         dismiss()
                     }
-                    .disabled(title.isEmpty)
+                    .disabled(!isValid)
                     .buttonStyle(PrimaryButtonStyle())
                 }
             }

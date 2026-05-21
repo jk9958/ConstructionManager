@@ -20,6 +20,11 @@ struct EditTaskView: View {
     let priorities = TaskPriority.allCases
     let statuses = TaskStatus.allCases
 
+    private var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && deadline >= startDate
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -55,6 +60,7 @@ struct EditTaskView: View {
                     Button("Save") {
                         withAnimation(.easeInOut) { saveChanges() }
                     }
+                    .disabled(!isValid)
                     .buttonStyle(PrimaryButtonStyle())
                 }
             }

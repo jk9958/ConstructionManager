@@ -11,6 +11,10 @@ struct AddTaskView: View {
     @State private var showErrorAlert = false
     @State private var alertMessage: String? = nil
 
+    private var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -52,7 +56,7 @@ struct AddTaskView: View {
                     Button("Save") {
                         withAnimation(.easeInOut) { saveTask() }
                     }
-                    .disabled(title.isEmpty)
+                    .disabled(!isValid)
                     .buttonStyle(PrimaryButtonStyle())
                 }
             }
