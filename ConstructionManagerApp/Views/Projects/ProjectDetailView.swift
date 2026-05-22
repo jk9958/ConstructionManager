@@ -84,8 +84,8 @@ struct ProjectDetailView: View {
 
     private var projectDetails: some View {
         VStack(alignment: .leading, spacing: DS.s) {
-            detailRow(title: "Priority:", value: project.priority ?? "N/A")
-            detailRow(title: "Status:", value: project.status ?? "N/A")
+            detailRow(title: "Priority:", value: project.priority?.rawValue ?? "N/A")
+            detailRow(title: "Status:", value: project.status?.rawValue ?? "N/A")
             detailRow(title: "Budget:", value: String(format: "$%.2f", project.budget))
             detailRow(title: "Location:", value: project.location ?? "N/A")
         }
@@ -259,8 +259,8 @@ struct ProjectDetailView: View {
                     id: UUID(),
                     name: "Build a House",
                     projectDescription: "Residential construction",
-                    priority: "High",
-                    status: "In Progress",
+                    priority: .high,
+                    status: .inProgress,
                     budget: 50000,
                     location: "New York",
                     startDate: Date(),

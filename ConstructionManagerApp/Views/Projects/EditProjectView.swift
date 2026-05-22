@@ -6,15 +6,12 @@ struct EditProjectView: View {
 
     @State private var name: String = ""
     @State private var description: String = ""
-    @State private var priority: String = "Medium"
-    @State private var status: String = "Not Started"
+    @State private var priority: ProjectPriority = .medium
+    @State private var status: ProjectStatus = .notStarted
     @State private var budget: Double = 0.0
     @State private var location: String = ""
     @State private var startDate: Date = Date()
     @State private var expectedEndDate: Date = Date()
-
-    let priorities = ["Low", "Medium", "High"]
-    let statuses = ["Not Started", "In Progress", "Completed"]
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -29,10 +26,14 @@ struct EditProjectView: View {
                     TextField("Name", text: $name)
                     TextField("Description", text: $description)
                     Picker("Priority", selection: $priority) {
-                        ForEach(priorities, id: \.self) { Text($0) }
+                        ForEach(ProjectPriority.allCases, id: \.self) { priority in
+                            Text(priority.rawValue).tag(priority)
+                        }
                     }
                     Picker("Status", selection: $status) {
-                        ForEach(statuses, id: \.self) { Text($0) }
+                        ForEach(ProjectStatus.allCases, id: \.self) { status in
+                            Text(status.rawValue).tag(status)
+                        }
                     }
                     TextField("Location", text: $location)
                         .autocapitalization(.words)
@@ -67,8 +68,8 @@ struct EditProjectView: View {
     private func loadProjectDetails() {
         name = project.name ?? ""
         description = project.projectDescription ?? ""
-        priority = project.priority ?? "Medium"
-        status = project.status ?? "Not Started"
+        priority = project.priority ?? .medium
+        status = project.status ?? .notStarted
         budget = project.budget
         location = project.location ?? ""
         startDate = project.startDate ?? Date()

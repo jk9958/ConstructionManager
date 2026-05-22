@@ -12,7 +12,7 @@ final class ConstructionManagerAppTests: XCTestCase {
 
     func testExpenseViewModel_loadsAndModifiesExpenses() {
         let viewModel = ExpenseViewModel()
-        XCTAssertEqual(viewModel.expenses.count, 2, "ExpenseViewModel should start with two sample expenses")
+        let initialCount = viewModel.expenses.count
 
         let newExpense = Expense(
             id: UUID(),
@@ -29,16 +29,19 @@ final class ConstructionManagerAppTests: XCTestCase {
         )
 
         viewModel.addExpense(newExpense)
-        XCTAssertEqual(viewModel.expenses.count, 3)
-        XCTAssertEqual(viewModel.expenses.last?.id, newExpense.id)
+        XCTAssertEqual(viewModel.expenses.count, initialCount + 1)
+        XCTAssertTrue(viewModel.expenses.contains { $0.id == newExpense.id })
 
         var updatedExpense = newExpense
         updatedExpense.amount = 55.75
         viewModel.updateExpense(updatedExpense)
-        XCTAssertEqual(viewModel.expenses.last?.amount, 55.75)
+        XCTAssertEqual(viewModel.expenses.first { $0.id == newExpense.id }?.amount, 55.75)
 
-        viewModel.removeExpense(at: 0)
-        XCTAssertEqual(viewModel.expenses.count, 2)
+        if let index = viewModel.expenses.firstIndex(where: { $0.id == newExpense.id }) {
+            viewModel.removeExpense(at: IndexSet(integer: index))
+        }
+        XCTAssertFalse(viewModel.expenses.contains { $0.id == newExpense.id })
+        XCTAssertEqual(viewModel.expenses.count, initialCount)
     }
 
     func testProjectListViewModel_addProjectPersistsToCoreData() {
@@ -67,8 +70,8 @@ final class ConstructionManagerAppTests: XCTestCase {
             id: projectID,
             name: "Persistence Test Project",
             projectDescription: "Project used for persistence tests",
-            priority: "High",
-            status: "In Progress",
+            priority: .high,
+            status: .inProgress,
             budget: 3000,
             location: "Test Site",
             startDate: Date(),
@@ -128,8 +131,8 @@ final class ConstructionManagerAppTests: XCTestCase {
             id: projectID,
             name: "Task Fetch Project",
             projectDescription: "Test project for task fetching",
-            priority: "Medium",
-            status: "Not Started",
+            priority: .medium,
+            status: .notStarted,
             budget: 1000,
             location: "Test Lab",
             startDate: Date(),

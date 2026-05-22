@@ -389,8 +389,8 @@ extension CoreDataManager {
         projectEntity.id = project.id
         projectEntity.name = project.name
         projectEntity.projectDescription = project.projectDescription
-        projectEntity.priority = project.priority
-        projectEntity.status = project.status
+        projectEntity.priority = project.priority?.rawValue
+        projectEntity.status = project.status?.rawValue
         projectEntity.budget = project.budget
         projectEntity.location = project.location
         projectEntity.startDate = project.startDate
@@ -464,8 +464,8 @@ extension CoreDataManager {
                     id: projectEntity.id ?? UUID(),
                     name: projectEntity.name,
                     projectDescription: projectEntity.projectDescription,
-                    priority: projectEntity.priority,
-                    status: projectEntity.status,
+                    priority: projectEntity.priority.flatMap(ProjectPriority.init(rawValue:)),
+                    status: projectEntity.status.flatMap(ProjectStatus.init(rawValue:)),
                     budget: projectEntity.budget,
                     location: projectEntity.location,
                     startDate: projectEntity.startDate,
@@ -507,8 +507,8 @@ extension CoreDataManager {
                 id: projectEntity.id ?? UUID(),
                 name: projectEntity.name,
                 projectDescription: projectEntity.projectDescription,
-                priority: projectEntity.priority,
-                status: projectEntity.status,
+                priority: projectEntity.priority.flatMap(ProjectPriority.init(rawValue:)),
+                status: projectEntity.status.flatMap(ProjectStatus.init(rawValue:)),
                 budget: projectEntity.budget,
                 location: projectEntity.location,
                 startDate: projectEntity.startDate,
@@ -670,8 +670,8 @@ extension CoreDataManager {
                 id: projectEntity.id ?? UUID(),
                 name: projectEntity.name,
                 projectDescription: projectEntity.projectDescription,
-                priority: projectEntity.priority,
-                status: projectEntity.status,
+                priority: projectEntity.priority.flatMap(ProjectPriority.init(rawValue:)),
+                status: projectEntity.status.flatMap(ProjectStatus.init(rawValue:)),
                 budget: projectEntity.budget,
                 location: projectEntity.location,
                 startDate: projectEntity.startDate,
@@ -710,8 +710,8 @@ extension CoreDataManager {
             guard let projectEntity = try context.fetch(fetchRequest).first else { return }
             projectEntity.name = project.name
             projectEntity.projectDescription = project.projectDescription
-            projectEntity.priority = project.priority
-            projectEntity.status = project.status
+            projectEntity.priority = project.priority?.rawValue
+            projectEntity.status = project.status?.rawValue
             projectEntity.budget = project.budget
             projectEntity.location = project.location
             projectEntity.startDate = project.startDate
@@ -774,5 +774,49 @@ extension CoreDataManager {
             }
         }
         return success
+    }
+}
+
+extension CoreDataManager {
+    // MARK: - DailyLogEntity CRUD
+    @discardableResult
+    func createDailyLog(_ log: DailyLog) -> Bool {
+        let fetchRequest: NSFetchRequest<DailyLogEntity> = DailyLogEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", log.id as CVarArg)
+        let entity = (try? context.fetch(fetchRequest).first) ?? DailyLogEntity(context: context)
+        entity.id = log.id
+        entity.date = log.date
+        entity.notes = log.progress
+        return saveContext()
+    }
+
+    func fetchDailyLogs() -> [DailyLog] {
+        let fetchRequest: NSFetchRequest<DailyLogEntity> = DailyLogEntity.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+        do {
+            return try context.fetch(fetchRequest).map { entity in
+                DailyLog(
+                    id: entity.id ?? UUID(),
+                    date: entity.date ?? Date(),
+                    progress: entity.notes ?? ""
+                )
+            }
+        } catch {
+            Logger.coreData.error("Failed to fetch daily logs: \(error.localizedDescription, privacy: .public)")
+            return []
+        }
+    }
+
+    func deleteDailyLog(_ log: DailyLog) {
+        let fetchRequest: NSFetchRequest<DailyLogEntity> = DailyLogEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", log.id as CVarArg)
+        do {
+            for entity in try context.fetch(fetchRequest) {
+                context.delete(entity)
+            }
+            saveContext()
+        } catch {
+            Logger.coreData.error("Failed to delete daily log: \(error.localizedDescription, privacy: .public)")
+        }
     }
 }

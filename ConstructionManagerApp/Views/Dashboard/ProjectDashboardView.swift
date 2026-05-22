@@ -47,8 +47,8 @@ struct ProjectDashboardView: View {
     private var metricsSection: some View {
         HStack(spacing: 16) {
             MetricCardView(title: "Total Projects", value: "\(viewModel.projects.count)")
-            MetricCardView(title: "In Progress", value: "\(viewModel.projects.filter { $0.status == "In Progress" }.count)")
-            MetricCardView(title: "Completed", value: "\(viewModel.projects.filter { $0.status == "Completed" }.count)")
+            MetricCardView(title: "In Progress", value: "\(viewModel.projects.filter { $0.status == .inProgress }.count)")
+            MetricCardView(title: "Completed", value: "\(viewModel.projects.filter { $0.status == .completed }.count)")
         }
     }
 }
